@@ -13,7 +13,7 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/server"
 )
 
-func main () {
+func main() {
 	cfg := config.LoadConfig()
 	srv := server.New(cfg)
 
@@ -21,14 +21,14 @@ func main () {
 	defer stop()
 	go func() {
 		log.Printf("server listening on %s", srv.Addr)
-		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed){
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server error: %v", err)
 		}
 	}()
 
-	<- ctx.Done()
+	<-ctx.Done()
 	log.Println("shutdown singal received")
 
-	server.Shutdown(context.Background(),srv)
+	server.Shutdown(context.Background(), srv)
 	log.Println("server stopped")
 }

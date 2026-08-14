@@ -10,12 +10,12 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/handler"
 )
 
-func New(cfg *config.Config) *http.Server{
+func New(cfg *config.Config) *http.Server {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /health", handler.Health())
 
-	return  &http.Server{
+	return &http.Server{
 		Addr:         ":" + cfg.Port,
 		Handler:      mux,
 		ReadTimeout:  10 * time.Second,
