@@ -1,0 +1,21 @@
+services:
+  backend:
+    build:
+      context: ./backend # directory holding the Dockerfile + go.mod (build context)
+      dockerfile: Dockerfile # explicit, even though it's the default name Compose looks for
+    image: pipeline-processing-backend:local
+    container_name: pipeline-processing-backend
+    ports:
+      - "${PORT:-8080}:8080" # hostPort:containerPort - override PORT in your shell/.env if 8080 is taken
+    env_file:
+      - path: .env
+        required: false # don't fail if you haven't created a .env yet (see .env.example)
+    environment:
+      PORT: 8080 # what the app inside the container listens on; matches Dockerfile's EXPOSE 8080
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
