@@ -1,0 +1,71 @@
+services:
+  backend:
+    build:
+      context: ./backend 
+      dockerfile: Dockerfile 
+    image: pipeline-processing-backend:local
+    container_name: pipeline-processing-backend
+    ports:
+      - "${PORT:-8080}:8080" 
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PORT: 8080
+      POSTGRES_HOST: db # service name below; docker's internal DNS resolves it, unlike the "localhost" default used for local (non-docker) runs
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-pipeline_processing}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  db:
+    image: postgres:16-alpine
+    container_name: pipeline-processing-db
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-pipeline_processing}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data 
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-pipeline_processing}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+  
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${ADMIN_PASSWORD:-adminpassword}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
+  pgadmin_data:
