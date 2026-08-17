@@ -3,32 +3,57 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/SsagarikaR/pipeline-processing/internal/config"
+	"github.com/SsagarikaR/pipeline-processing/internal/db"
+	"github.com/SsagarikaR/pipeline-processing/internal/logger"
 	"github.com/SsagarikaR/pipeline-processing/internal/server"
 )
 
 func main() {
+	if err := run(); err != nil {
+		slog.Error("startup failed", "err", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	cfg := config.LoadConfig()
-	srv := server.New(cfg)
+	slog.SetDefault(logger.New(cfg.LogLevel, cfg.LogFormat))
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	pool, err := db.New(ctx, cfg.DB)
+	if err != nil {
+		return fmt.Errorf("db connection failed: %w", err)
+	}
+	defer func() {
+		if err := pool.Close(); err != nil {
+			slog.Error("db close failed", "err", err)
+		}
+	}()
+
+	srv := server.New(cfg, pool)
+
 	go func() {
-		log.Printf("server listening on %s", srv.Addr)
+		slog.Info("server listening", "addr", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("server error: %v", err)
+			slog.Error("server error", "err", err)
+			os.Exit(1)
 		}
 	}()
 
 	<-ctx.Done()
-	log.Println("shutdown singal received")
+	slog.Info("shutdown signal received")
 
 	server.Shutdown(context.Background(), srv)
-	log.Println("server stopped")
+	slog.Info("server stopped")
+	return nil
 }

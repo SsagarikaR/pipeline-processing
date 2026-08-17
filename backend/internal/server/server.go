@@ -2,7 +2,8 @@ package server
 
 import (
 	"context"
-	"log"
+	"database/sql"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -10,10 +11,10 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/handler"
 )
 
-func New(cfg *config.Config) *http.Server {
+func New(cfg *config.Config, pool *sql.DB) *http.Server {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /health", handler.Health())
+	mux.HandleFunc("GET /health", handler.Health(pool))
 
 	return &http.Server{
 		Addr:         ":" + cfg.Port,
@@ -28,6 +29,6 @@ func Shutdown(ctx context.Context, srv *http.Server) {
 	shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Printf("graceful shutdown failed: %v", err)
+		slog.Error("graceful shutdown failed", "err", err)
 	}
 }
