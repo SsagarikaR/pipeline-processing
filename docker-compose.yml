@@ -11,7 +11,12 @@ services:
       - path: .env
         required: false
     environment:
-      PORT: 8080 
+      PORT: 8080
+      POSTGRES_HOST: db # service name below; docker's internal DNS resolves it, unlike the "localhost" default used for local (non-docker) runs
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-pipeline_processing}
     depends_on:
       db:
         condition: service_healthy
