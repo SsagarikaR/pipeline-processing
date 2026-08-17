@@ -1,3 +1,5 @@
+include ../.env
+
 GOBIN := $(shell go env GOPATH)/bin
 
 BINARY_NAME := server
@@ -37,3 +39,12 @@ check: fmt vet lint test
 
 hooks:
 	git config core.hooksPath ../.githooks
+
+create_migration:
+	$(GOBIN)/migrate create -ext=sql -dir=migrations -seq init
+
+migrate_up:
+	$(GOBIN)/migrate -path=migrations -database="${DB_URL}" up
+
+migrate_down:
+	$(GOBIN)/migrate -path=migrations -database="${DB_URL}" down
