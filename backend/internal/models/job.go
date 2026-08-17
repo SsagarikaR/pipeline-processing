@@ -9,7 +9,8 @@ type Job struct {
 	ProcessedRecords   int         `json:"processed_records"`
 	ErrorCount         int         `json:"error_count"`
 	CreatedAt          time.Time   `json:"created_at"`
-	CompletedAt        *time.Time  `json:"completed_at"` //Pointer because it can be null
+	StartedAt          *time.Time  `json:"started_at"`
+	CompletedAt        *time.Time  `json:"completed_at"`
 }
 
 type Result struct {
