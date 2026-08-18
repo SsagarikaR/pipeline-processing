@@ -1,4 +1,4 @@
-package handler
+package job
 
 import (
 	"database/sql"
@@ -8,19 +8,18 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/SsagarikaR/pipeline-processing/internal/store"
 )
 
-type pipelineHandler struct{
-	store store.JobStore
+type pipelineHandler struct {
+	service *JobService
 }
 
-func NewPipelineHandler(store store.JobStore) *pipelineHandler {
-	return &pipelineHandler{store: store}
+func NewPipelineHandler(service *JobService) *pipelineHandler {
+	return &pipelineHandler{service: service}
 }
 
 func (h *pipelineHandler) CreateJob(w http.ResponseWriter, r *http.Request) {
-	var req struct{
+	var req struct {
 		Type string `json:"type"`
 		Data []int  `json:"data"`
 	}
@@ -30,13 +29,11 @@ func (h *pipelineHandler) CreateJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jobSpec, err := json.Marshal(req)
-	if err != nil {
-		http.Error(w, "failed to serialize job spec", http.StatusInternalServerError)
+	job, err := h.service.CreateJob(r.Context(), req.Type, req.Data)
+	if errors.Is(err, ErrInvalidJobType) {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	job,err := h.store.CreateJob(r.Context(), jobSpec)
 	if err != nil {
 		slog.Error("failed to create job", "err", err)
 		http.Error(w, "failed to create job", http.StatusInternalServerError)
@@ -61,7 +58,7 @@ func (h *pipelineHandler) GetJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	job,err := h.store.GetJob(r.Context(), jobID)
+	job,err := h.service.GetJob(r.Context(), jobID)
 	if err != nil {
 		slog.Error("failed to get job", "err", err)
 		http.Error(w, "failed to get job", http.StatusInternalServerError)
@@ -73,7 +70,7 @@ func (h *pipelineHandler) GetJob(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *pipelineHandler) GetAllJobs(w http.ResponseWriter, r *http.Request) {
-	jobs,err := h.store.GetAllJobs(r.Context())
+	jobs,err := h.service.GetAllJobs(r.Context())
 	if err != nil {
 		slog.Error("failed to get all jobs", "err", err)
 		http.Error(w, "failed to get all jobs", http.StatusInternalServerError)
@@ -91,7 +88,7 @@ func (h *pipelineHandler) DeleteJobs(w http.ResponseWriter, r *http.Request){
 		http.Error(w, "invalid job id", http.StatusBadRequest)
 		return
 	}
-	err = h.store.DeleteJobs(r.Context(), id)
+	err = h.service.DeleteJob(r.Context(), id)
 	if errors.Is(err, sql.ErrNoRows){
 		http.Error(w, "job not found", http.StatusNotFound)
 		return
@@ -104,3 +101,4 @@ func (h *pipelineHandler) DeleteJobs(w http.ResponseWriter, r *http.Request){
 
 	w.WriteHeader(http.StatusNoContent)
 }
+

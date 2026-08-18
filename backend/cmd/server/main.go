@@ -12,7 +12,7 @@ import (
 
 	"github.com/SsagarikaR/pipeline-processing/internal/config"
 	"github.com/SsagarikaR/pipeline-processing/internal/db"
-	"github.com/SsagarikaR/pipeline-processing/internal/logger"
+	"github.com/SsagarikaR/pipeline-processing/pkg/logger"
 	"github.com/SsagarikaR/pipeline-processing/internal/server"
 )
 
