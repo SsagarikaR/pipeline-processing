@@ -18,23 +18,23 @@ func NewJobService(store JobStore) *JobService {
 	return &JobService{store: store}
 }
 
-func (s *JobService) CreateJob(ctx context.Context, jobType string, data []int) (models.Job, error) {
-	if jobType == "" {
+func (s *JobService) CreateJob(ctx context.Context, spec pipeline.JobSpec) (models.Job, error) {
+	if len(spec.Sources) == 0 {
 		return models.Job{}, ErrInvalidJobType
 	}
-	if len(data) == 0 {
-		return models.Job{}, errors.New("data cannot be empty")
+
+	rawSpec, err := json.Marshal(spec)
+	if err != nil {
+		return models.Job{}, fmt.Errorf("marshal spec: %w", err)
 	}
 
-	spec, err := json.Marshal(struct {
-		Type string `json:"type"`
-		Data []int  `json:"data"`
-	}{Type: jobType, Data: data})
+	newJob, err := s.store.CreateJob(ctx, rawSpec)
 	if err != nil {
 		return models.Job{}, err
 	}
-
-	return s.store.CreateJob(ctx, spec)
+	
+	
+	return newJob, nil
 }
 
 func (s *JobService) GetJob(ctx context.Context, id int) (models.Job, error) {
