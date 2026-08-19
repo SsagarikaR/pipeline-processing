@@ -332,6 +332,12 @@
                 "processed_records": {
                     "type": "integer"
                 },
+                "spec": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
                 "started_at": {
                     "type": "string"
                 },

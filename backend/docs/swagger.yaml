@@ -12,6 +12,10 @@ definitions:
         type: integer
       processed_records:
         type: integer
+      spec:
+        items:
+          type: integer
+        type: array
       started_at:
         type: string
       status:
