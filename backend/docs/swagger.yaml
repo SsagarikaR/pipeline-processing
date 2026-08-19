@@ -1,0 +1,321 @@
+basePath: /
+definitions:
+  github_com_SsagarikaR_pipeline-processing_internal_models.Job:
+    properties:
+      completed_at:
+        type: string
+      created_at:
+        type: string
+      error_count:
+        type: integer
+      id:
+        type: integer
+      processed_records:
+        type: integer
+      started_at:
+        type: string
+      status:
+        type: string
+      total_records:
+        type: integer
+    type: object
+  github_com_SsagarikaR_pipeline-processing_internal_models.JobError:
+    properties:
+      created_at:
+        type: string
+      error_message:
+        type: string
+      id:
+        type: integer
+      job_id:
+        type: integer
+      record_data:
+        type: string
+      stage:
+        type: string
+    type: object
+  github_com_SsagarikaR_pipeline-processing_internal_models.Result:
+    properties:
+      aggregated_value:
+        type: number
+      created_at:
+        type: string
+      group_key:
+        type: string
+      id:
+        type: integer
+      job_id:
+        type: integer
+    type: object
+  github_com_SsagarikaR_pipeline-processing_internal_pipeline.AggregationConfig:
+    properties:
+      field:
+        type: string
+      groupBy:
+        type: string
+      op:
+        description: '"sum" | "avg" | "count" | "min" | "max"'
+        type: string
+    type: object
+  github_com_SsagarikaR_pipeline-processing_internal_pipeline.ConcurrencyConfig:
+    properties:
+      transformWorkers:
+        type: integer
+      validateWorkers:
+        type: integer
+    type: object
+  github_com_SsagarikaR_pipeline-processing_internal_pipeline.ExportConfig:
+    properties:
+      path:
+        type: string
+      type:
+        description: '"csv" | "json" | "db"'
+        type: string
+    type: object
+  github_com_SsagarikaR_pipeline-processing_internal_pipeline.JobSpec:
+    properties:
+      aggregations:
+        items:
+          $ref: '#/definitions/github_com_SsagarikaR_pipeline-processing_internal_pipeline.AggregationConfig'
+        type: array
+      concurrency:
+        $ref: '#/definitions/github_com_SsagarikaR_pipeline-processing_internal_pipeline.ConcurrencyConfig'
+      exports:
+        items:
+          $ref: '#/definitions/github_com_SsagarikaR_pipeline-processing_internal_pipeline.ExportConfig'
+        type: array
+      sources:
+        items:
+          $ref: '#/definitions/github_com_SsagarikaR_pipeline-processing_internal_pipeline.SourceConfig'
+        type: array
+      transforms:
+        items:
+          $ref: '#/definitions/github_com_SsagarikaR_pipeline-processing_internal_pipeline.TransformConfig'
+        type: array
+    type: object
+  github_com_SsagarikaR_pipeline-processing_internal_pipeline.SourceConfig:
+    properties:
+      path:
+        type: string
+      type:
+        description: '"csv" | "json" | "api"'
+        type: string
+    type: object
+  github_com_SsagarikaR_pipeline-processing_internal_pipeline.TransformConfig:
+    properties:
+      name:
+        type: string
+      params:
+        additionalProperties: {}
+        type: object
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a data processing pipeline API.
+  title: Pipeline Processing API
+  version: "1.0"
+paths:
+  /api/v1/pipelines/{id}/cancel:
+    patch:
+      description: Cancel a running pipeline job by ID
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "409":
+          description: Conflict
+          schema:
+            type: string
+      summary: Cancel a pipeline job
+  /api/v1/pipelines/{id}/errors:
+    get:
+      description: Retrieve job errors and failed records for a specific pipeline
+        job by ID
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_SsagarikaR_pipeline-processing_internal_models.JobError'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get pipeline errors
+  /api/v1/pipelines/{id}/progress:
+    get:
+      description: Get progress and metrics of a specific pipeline job by ID
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get pipeline progress
+  /api/v1/pipelines/{id}/results:
+    get:
+      description: Retrieve results for a specific pipeline job by ID
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_SsagarikaR_pipeline-processing_internal_models.Result'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get pipeline results
+  /pipelines:
+    get:
+      description: Get a list of all pipeline jobs
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_SsagarikaR_pipeline-processing_internal_models.Job'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get all pipeline jobs
+    post:
+      consumes:
+      - application/json
+      description: Create a new pipeline job with specified input, transform, aggregate,
+        and export stages
+      parameters:
+      - description: Job Specification
+        in: body
+        name: job
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_SsagarikaR_pipeline-processing_internal_pipeline.JobSpec'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_SsagarikaR_pipeline-processing_internal_models.Job'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a pipeline job
+  /pipelines/{id}:
+    delete:
+      description: Delete a specific pipeline job and its artifacts by ID
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete a pipeline job
+    get:
+      description: Get details of a specific pipeline job by ID
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_SsagarikaR_pipeline-processing_internal_models.Job'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get a pipeline job
+swagger: "2.0"

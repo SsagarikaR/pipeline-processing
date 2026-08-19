@@ -16,6 +16,11 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/server"
 )
 
+// @title Pipeline Processing API
+// @version 1.0
+// @description This is a data processing pipeline API.
+// @host localhost:8080
+// @BasePath /
 func main() {
 	if err := run(); err != nil {
 		slog.Error("startup failed", "err", err)

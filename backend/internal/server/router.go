@@ -5,10 +5,15 @@ import (
 	"net/http"
 
 	"github.com/SsagarikaR/pipeline-processing/internal/job"
+	_ "github.com/SsagarikaR/pipeline-processing/docs"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 func mapRoutes(pool *sql.DB) *http.ServeMux {
 	mux := http.NewServeMux()
+	
+	// Swagger endpoint
+	mux.HandleFunc("GET /swagger/", httpSwagger.WrapHandler)
 
 	// Initialize Job Dependencies
 	jobStore := job.NewJobStore(pool)
@@ -21,6 +26,5 @@ func mapRoutes(pool *sql.DB) *http.ServeMux {
 	mux.HandleFunc("GET /pipelines", ph.GetAllJobs)
 	mux.HandleFunc("DELETE /pipelines/{id}", ph.DeleteJobs)
 
-	
 	return mux
 }
