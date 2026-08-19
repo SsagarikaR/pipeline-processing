@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/SsagarikaR/pipeline-processing/internal/config"
+	"github.com/SsagarikaR/pipeline-processing/middleware"
 )
 
 func New(cfg *config.Config, pool *sql.DB) *http.Server {
@@ -15,7 +16,7 @@ func New(cfg *config.Config, pool *sql.DB) *http.Server {
 
 	return &http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      router, 
+		Handler:      middleware.LoggingMiddleware(router), 
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
