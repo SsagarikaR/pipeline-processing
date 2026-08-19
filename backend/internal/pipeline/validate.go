@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 )
 
@@ -33,6 +34,7 @@ func runValidation(ctx context.Context, jobID int, in <-chan Record, workers int
 						return
 					}
 					if err := defaultValidator(r); err != nil {
+						slog.Error("validate stage failed", "job_id", jobID, "error", err)
 						errCh <- ProcessError{JobID: jobID, Stage: "validate", Record: &r, Message: err.Error()}
 						progressCh <- struct{}{}
 						continue

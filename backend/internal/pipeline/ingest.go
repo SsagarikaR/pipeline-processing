@@ -6,11 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
-
 )
 
 type csvIngester struct{}
@@ -107,6 +107,7 @@ func runIngestion(ctx context.Context, jobID int, sources []SourceConfig, errCh 
 	for _, src := range sources {
 		ingester, ok := GetIngester(src.Type)
 		if !ok {
+			slog.Error("ingest stage failed: unknown source type", "job_id", jobID, "type", src.Type)
 			errCh <- ProcessError{JobID: jobID, Stage: "ingest", Message: "unknown source type: " + src.Type}
 			continue
 		}
@@ -114,6 +115,7 @@ func runIngestion(ctx context.Context, jobID int, sources []SourceConfig, errCh 
 		go func(cfg SourceConfig, ing Ingester) {
 			defer wg.Done()
 			if err := ing.Ingest(ctx, cfg, recordsCh); err != nil && err != context.Canceled {
+				slog.Error("ingest stage failed", "job_id", jobID, "source", cfg.Path, "error", err)
 				errCh <- ProcessError{JobID: jobID, Stage: "ingest", Message: err.Error()}
 			}
 		}(src, ingester)

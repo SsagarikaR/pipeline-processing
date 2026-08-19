@@ -2,11 +2,13 @@ package pipeline
 
 import (
 	"context"
-	
+	"log/slog"
+
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
 func Run(ctx context.Context, jobID int, spec JobSpec, tracker *Tracker, resultStore func(ctx context.Context, results []models.Result) error) string {
+	slog.Info("pipeline started", "job_id", jobID)
 	tracker.Run()
 	defer tracker.Close()
 
@@ -19,10 +21,17 @@ func Run(ctx context.Context, jobID int, spec JobSpec, tracker *Tracker, resultS
 	select {
 	case <-doneCh:
 		if ctx.Err() != nil {
+			slog.Warn("pipeline cancelled", "job_id", jobID)
 			return StatusCancelled
 		}
+		if tracker.Errors() > 0 && tracker.Processed() == 0 {
+			slog.Error("pipeline failed: no records processed and errors detected", "job_id", jobID)
+			return StatusFailed
+		}
+		slog.Info("pipeline completed", "job_id", jobID)
 		return StatusCompleted
 	case <-ctx.Done():
+		slog.Warn("pipeline cancelled", "job_id", jobID)
 		return StatusCancelled
 	}
 }

@@ -1,12 +1,13 @@
 package pipeline
 
 import (
+	"log/slog"
 	"sync/atomic"
-
 )
 
 type Tracker struct {
 	processed  int64
+	errors     int64
 	errCh      chan ProcessError
 	progressCh chan struct{}
 	onError    func(ProcessError)
@@ -28,10 +29,13 @@ func (t *Tracker) Run() {
 	}()
 	go func() {
 		for e := range t.errCh {
+			atomic.AddInt64(&t.errors, 1)
+			slog.Error("pipeline stage failed", "job_id", e.JobID, "stage", e.Stage, "error", e.Message)
 			t.onError(e)
 		}
 	}()
 }
 
 func (t *Tracker) Processed() int64 { return atomic.LoadInt64(&t.processed) }
+func (t *Tracker) Errors() int64    { return atomic.LoadInt64(&t.errors) + int64(len(t.errCh)) }
 func (t *Tracker) Close()           { close(t.progressCh); close(t.errCh) }
