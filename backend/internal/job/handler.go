@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/SsagarikaR/pipeline-processing/internal/pipeline"
 	_"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
@@ -132,6 +133,129 @@ func (h *pipelineHandler) DeleteJobs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// CancelJob handles PATCH /api/v1/pipelines/:id/cancel
+// @Summary Cancel a pipeline job
+// @Description Cancel a running pipeline job by ID
+// @Param id path int true "Job ID"
+// @Success 204 "No Content"
+// @Failure 400 {string} string "Bad Request"
+// @Failure 409 {string} string "Conflict"
+// @Router /api/v1/pipelines/{id}/cancel [patch]
+func (h *pipelineHandler) CancelJob(w http.ResponseWriter, r *http.Request) {
+	id, err := parseID(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := h.service.CancelJob(r.Context(), id); err != nil {
+		http.Error(w, err.Error(), http.StatusConflict) // job already finished / not running
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// GetProgress handles GET /api/v1/pipelines/:id/progress
+// @Summary Get pipeline progress
+// @Description Get progress and metrics of a specific pipeline job by ID
+// @Produce json
+// @Param id path int true "Job ID"
+// @Success 200 {object} interface{}
+// @Failure 400 {string} string "Bad Request"
+// @Failure 404 {string} string "Not Found"
+// @Failure 500 {string} string "Internal Server Error"
+// @Router /api/v1/pipelines/{id}/progress [get]
+func (h *pipelineHandler) GetProgress(w http.ResponseWriter, r *http.Request) {
+	id, err := parseID(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	j, processed, err := h.service.GetProgress(r.Context(), id)
+	if errors.Is(err, sql.ErrNoRows) {
+		http.Error(w, "job not found", http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		slog.Error("failed to get progress", "err", err)
+		http.Error(w, "failed to get progress", http.StatusInternalServerError)
+		return
+	}
+
+	percent := 0.0
+	if j.TotalRecords > 0 {
+		percent = float64(processed) / float64(j.TotalRecords) * 100
+	}
+
+	resp := struct {
+		JobID           int     `json:"jobId"`
+		Status          string  `json:"status"`
+		Processed       int64   `json:"processed"`
+		PercentComplete float64 `json:"percentComplete"`
+		StartedAt       any     `json:"startedAt"`
+		CompletedAt     any     `json:"completedAt"`
+	}{j.ID, j.Status, processed, percent, j.StartedAt, j.CompletedAt}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+// GetResults handles GET /api/v1/pipelines/:id/results
+// @Summary Get pipeline results
+// @Description Retrieve results for a specific pipeline job by ID
+// @Produce json
+// @Param id path int true "Job ID"
+// @Success 200 {array} models.Result
+// @Failure 400 {string} string "Bad Request"
+// @Failure 500 {string} string "Internal Server Error"
+// @Router /api/v1/pipelines/{id}/results [get]
+func (h *pipelineHandler) GetResults(w http.ResponseWriter, r *http.Request) {
+	id, err := parseID(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	results, err := h.service.GetResults(r.Context(), id)
+	if err != nil {
+		slog.Error("failed to get results", "err", err)
+		http.Error(w, "failed to get results", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(results)
+}
+
+// GetErrors handles GET /api/v1/pipelines/:id/errors
+// @Summary Get pipeline errors
+// @Description Retrieve job errors and failed records for a specific pipeline job by ID
+// @Produce json
+// @Param id path int true "Job ID"
+// @Success 200 {array} models.JobError
+// @Failure 400 {string} string "Bad Request"
+// @Failure 500 {string} string "Internal Server Error"
+// @Router /api/v1/pipelines/{id}/errors [get]
+func (h *pipelineHandler) GetErrors(w http.ResponseWriter, r *http.Request) {
+	id, err := parseID(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	errs, err := h.service.GetErrors(r.Context(), id)
+	if err != nil {
+		slog.Error("failed to get errors", "err", err)
+		http.Error(w, "failed to get errors", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(errs)
 }
 
 func parseID(r *http.Request) (int, error) {

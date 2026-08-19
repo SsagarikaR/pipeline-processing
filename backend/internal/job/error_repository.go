@@ -1,0 +1,47 @@
+package job
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+
+	"github.com/SsagarikaR/pipeline-processing/internal/models"
+)
+
+type ErrorStore interface {
+	InsertError(ctx context.Context, e models.JobError) error
+	GetErrorsByJob(ctx context.Context, jobID int) ([]models.JobError, error)
+}
+
+type postgresErrorStore struct{ db *sql.DB }
+
+func NewErrorStore(db *sql.DB) ErrorStore { return &postgresErrorStore{db: db} }
+
+func (s *postgresErrorStore) InsertError(ctx context.Context, e models.JobError) error {
+	_, err := s.db.ExecContext(ctx,
+		`INSERT INTO job_errors (job_id, record_data, error_message, stage) VALUES ($1, $2, $3, $4)`,
+		e.JobID, e.RecordData, e.ErrorMessage, e.Stage)
+	if err != nil {
+		return fmt.Errorf("store: insert error: %w", err)
+	}
+	return nil
+}
+
+func (s *postgresErrorStore) GetErrorsByJob(ctx context.Context, jobID int) ([]models.JobError, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT id, job_id, record_data, error_message, stage, created_at FROM job_errors WHERE job_id = $1`, jobID)
+	if err != nil {
+		return nil, fmt.Errorf("store: get errors: %w", err)
+	}
+	defer rows.Close()
+
+	var out []models.JobError
+	for rows.Next() {
+		var e models.JobError
+		if err := rows.Scan(&e.ID, &e.JobID, &e.RecordData, &e.ErrorMessage, &e.Stage, &e.CreatedAt); err != nil {
+			return nil, fmt.Errorf("store: scan error: %w", err)
+		}
+		out = append(out, e)
+	}
+	return out, rows.Err()
+}
