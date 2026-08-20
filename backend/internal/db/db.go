@@ -17,8 +17,8 @@ func New(ctx context.Context, cfg config.DBConfig) (*sql.DB, error) {
 		return nil, fmt.Errorf("db: open: %w", err)
 	}
 
-	pool.SetMaxOpenConns(10)
-	pool.SetMaxIdleConns(5)
+	pool.SetMaxOpenConns(25)
+	pool.SetMaxIdleConns(20)
 	pool.SetConnMaxLifetime(30 * time.Minute)
 
 	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
