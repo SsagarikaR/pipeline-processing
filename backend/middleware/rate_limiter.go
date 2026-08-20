@@ -10,7 +10,7 @@ import (
 
 type rateLimiter struct {
 	visitors map[string]*visitor
-	mu       sync.Mutex
+	mu       sync.RWMutex
 	rate     rate.Limit
 	burst    int
 }
@@ -48,23 +48,39 @@ func (rl *rateLimiter) cleanupVisitors() {
 }
 
 func (rl *rateLimiter) getVisitor(ip string) *rate.Limiter {
-	rl.mu.Lock()
-	defer rl.mu.Unlock()
-
+	rl.mu.RLock()
 	v, exists := rl.visitors[ip]
+	rl.mu.RUnlock()
+
 	if !exists {
-		limiter := rate.NewLimiter(rl.rate, rl.burst)
-		rl.visitors[ip] = &visitor{limiter, time.Now()}
-		return limiter
+		rl.mu.Lock()
+		defer rl.mu.Unlock()
+		// Double check
+		v, exists = rl.visitors[ip]
+		if !exists {
+			limiter := rate.NewLimiter(rl.rate, rl.burst)
+			rl.visitors[ip] = &visitor{limiter, time.Now()}
+			return limiter
+		}
 	}
 
+	rl.mu.Lock()
 	v.lastSeen = time.Now()
+	rl.mu.Unlock()
+	
 	return v.limiter
 }
 
 func (rl *rateLimiter) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip := r.RemoteAddr
+		ip := r.Header.Get("X-Forwarded-For")
+		if ip == "" {
+			ip = r.Header.Get("X-Real-IP")
+		}
+		if ip == "" {
+			ip = r.RemoteAddr
+		}
+		
 		limiter := rl.getVisitor(ip)
 
 		if !limiter.Allow() {
