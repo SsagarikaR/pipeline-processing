@@ -29,7 +29,7 @@ func (s *postgresErrorStore) InsertError(ctx context.Context, e models.JobError)
 
 func (s *postgresErrorStore) GetErrorsByJob(ctx context.Context, jobID int) ([]models.JobError, error) {
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, job_id, record_data, error_message, stage, created_at FROM job_errors WHERE job_id = $1`, jobID)
+		`SELECT id, job_id, record_data, error_message, stage, created_at FROM job_errors WHERE job_id = $1 ORDER BY created_at`, jobID)
 	if err != nil {
 		return nil, fmt.Errorf("store: get errors: %w", err)
 	}
