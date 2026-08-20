@@ -29,7 +29,7 @@ func NewPipelineHandler(service *JobService) *pipelineHandler {
 // @Success 201 {object} models.Job
 // @Failure 400 {string} string "Bad Request"
 // @Failure 500 {string} string "Internal Server Error"
-// @Router /pipelines [post]
+// @Router /api/v1/pipelines [post]
 func (h *pipelineHandler) CreateJob(w http.ResponseWriter, r *http.Request) {
 	var spec pipeline.JobSpec
 
@@ -92,7 +92,7 @@ func (h *pipelineHandler) GetJob(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Success 200 {array} models.Job
 // @Failure 500 {string} string "Internal Server Error"
-// @Router /pipelines [get]
+// @Router /api/v1/pipelines [get]
 func (h *pipelineHandler) GetAllJobs(w http.ResponseWriter, r *http.Request) {
 	jobs, err := h.service.GetAllJobs(r.Context())
 	if err != nil {
@@ -113,7 +113,7 @@ func (h *pipelineHandler) GetAllJobs(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {string} string "Bad Request"
 // @Failure 404 {string} string "Not Found"
 // @Failure 500 {string} string "Internal Server Error"
-// @Router /pipelines/{id} [delete]
+// @Router /api/v1pipelines/{id} [delete]
 func (h *pipelineHandler) DeleteJobs(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r)
 	if err != nil {
