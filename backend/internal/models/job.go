@@ -15,6 +15,7 @@ type Job struct {
 	CreatedAt          time.Time      `json:"created_at"`
 	StartedAt          *time.Time     `json:"started_at"`
 	CompletedAt        *time.Time     `json:"completed_at"`
+	ExportURL          *string        `json:"export_url"`
 }
 
 type Result struct {

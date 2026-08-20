@@ -334,6 +334,9 @@ const docTemplate = `{
                 "error_count": {
                     "type": "integer"
                 },
+                "export_url": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
