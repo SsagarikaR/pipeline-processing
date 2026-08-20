@@ -2,7 +2,9 @@ package pipeline
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
+	"os"
 
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
@@ -37,4 +39,24 @@ func runExport(ctx context.Context, jobID int, in <-chan aggOutput, exports []Ex
 	}()
 
 	return doneCh
+}
+
+type jsonExporter struct{}
+
+func (jsonExporter) Export(ctx context.Context, cfg ExportConfig, records []Record, results []models.Result) error {
+	f, err := os.Create(cfg.Path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	outData := map[string]any{
+		"records": records,
+		"results": results,
+	}
+	return json.NewEncoder(f).Encode(outData)
+}
+
+func init() {
+	RegisterExporter("json", jsonExporter{})
 }

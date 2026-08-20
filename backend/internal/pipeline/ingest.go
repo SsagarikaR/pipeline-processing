@@ -64,10 +64,37 @@ func (jsonIngester) Ingest(ctx context.Context, cfg SourceConfig, out chan<- Rec
 	}
 	defer closeFn()
 
-	var items []map[string]any
-	if err := json.NewDecoder(r).Decode(&items); err != nil {
+	var raw any
+	if err := json.NewDecoder(r).Decode(&raw); err != nil {
 		return fmt.Errorf("json decode: %w", err)
 	}
+
+	var items []map[string]any
+	switch v := raw.(type) {
+	case []any:
+		for _, item := range v {
+			if m, ok := item.(map[string]any); ok {
+				items = append(items, m)
+			}
+		}
+	case map[string]any:
+			for _, val := range v {
+			if arr, ok := val.([]any); ok {
+				for _, item := range arr {
+					if m, ok := item.(map[string]any); ok {
+						items = append(items, m)
+					}
+				}
+				break 
+			}
+		}
+		if len(items) == 0 {
+			items = append(items, v)
+		}
+	default:
+		return fmt.Errorf("json decode: expected array or object, got %T", raw)
+	}
+
 	for _, item := range items {
 		select {
 		case out <- Record{Source: cfg.Path, Data: item}:
