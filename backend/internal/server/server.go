@@ -14,9 +14,15 @@ import (
 func New(cfg *config.Config, pool *sql.DB) *http.Server {
 	router := mapRoutes(pool)
 
+	// Create a rate limiter allowing 10 requests per second with a burst of 20
+	limiter := middleware.NewRateLimiter(10, 20)
+
+	handler := limiter.Middleware(router)
+	handler = middleware.LoggingMiddleware(handler)
+
 	return &http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      middleware.LoggingMiddleware(router), 
+		Handler:      handler,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
