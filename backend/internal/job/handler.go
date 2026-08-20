@@ -7,9 +7,10 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
+	_ "github.com/SsagarikaR/pipeline-processing/internal/models"
 	"github.com/SsagarikaR/pipeline-processing/internal/pipeline"
-	_"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
 type pipelineHandler struct {
@@ -175,7 +176,7 @@ func (h *pipelineHandler) GetProgress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	j, processed, err := h.service.GetProgress(r.Context(), id)
+	j, processed, errCount, latencies, err := h.service.GetProgress(r.Context(), id)
 	if errors.Is(err, sql.ErrNoRows) {
 		http.Error(w, "job not found", http.StatusNotFound)
 		return
@@ -190,15 +191,33 @@ func (h *pipelineHandler) GetProgress(w http.ResponseWriter, r *http.Request) {
 	if j.TotalRecords > 0 {
 		percent = float64(processed) / float64(j.TotalRecords) * 100
 	}
+	if j.Status == "completed" {
+		percent = 100.0
+	}
+
+	var rate float64
+	if j.StartedAt != nil {
+		end := time.Now()
+		if j.CompletedAt != nil {
+			end = *j.CompletedAt // freeze the rate once the job is done, don't keep diluting it against wall-clock time
+		}
+		elapsed := end.Sub(*j.StartedAt).Seconds()
+		if elapsed > 0 {
+			rate = float64(processed) / elapsed
+		}
+	}
 
 	resp := struct {
-		JobID           int     `json:"jobId"`
-		Status          string  `json:"status"`
-		Processed       int64   `json:"processed"`
-		PercentComplete float64 `json:"percentComplete"`
-		StartedAt       any     `json:"startedAt"`
-		CompletedAt     any     `json:"completedAt"`
-	}{j.ID, j.Status, processed, percent, j.StartedAt, j.CompletedAt}
+		JobID           int               `json:"jobId"`
+		Status          string            `json:"status"`
+		Processed       int64             `json:"processed"`
+		ErrorCount      int64             `json:"errorCount"`
+		PercentComplete float64           `json:"percentComplete"`
+		RecordsPerSec   float64           `json:"recordsPerSec"`
+		StageLatencies  map[string]string `json:"stageLatencies,omitempty"`
+		StartedAt       any               `json:"startedAt"`
+		CompletedAt     any               `json:"completedAt"`
+	}{j.ID, j.Status, processed, errCount, percent, rate, latencies, j.StartedAt, j.CompletedAt}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)

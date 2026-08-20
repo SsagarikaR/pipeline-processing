@@ -16,7 +16,7 @@ type JobStore interface {
 	GetJob(ctx context.Context, jobID int) (models.Job, error)
 	GetAllJobs(ctx context.Context) ([]models.Job, error)
 	DeleteJobs(ctx context.Context, jobID int)(error)
-	UpdateStatus(ctx context.Context, jobID int,status string)(error)
+	UpdateStatusAndMetrics(ctx context.Context, jobID int, status string, processed int64, errors int64) error
 }
 
 type postgresJobStore struct {
@@ -125,19 +125,20 @@ func (s *postgresJobStore) DeleteJobs(ctx context.Context,jobID int) (error){
 	return  nil
 }
 
-func (s *postgresJobStore) UpdateStatus(ctx context.Context, jobID int, status string) error {
-	query := `UPDATE jobs SET status = $1`
-	args := []any{status}
+func (s *postgresJobStore) UpdateStatusAndMetrics(ctx context.Context, jobID int, status string, processed int64, errors int64) error {
+	query := `UPDATE jobs SET status = $1, processed_records = $2, error_count = $3`
+	args := []any{status, processed, errors}
 
-	// Stamp started_at/completed_at as the job transitions, so GET /jobs/:id
-	// and /progress can report real timestamps without extra plumbing.
 	switch status {
 	case pipeline.StatusRunning:
 		query += `, started_at = now()`
-	case pipeline.StatusCompleted, pipeline.StatusFailed, pipeline.StatusCancelled:
+	case pipeline.StatusCompleted:
+		// Once completed, we finally know the total records!
+		query += `, total_records = $2, completed_at = now()`
+	case pipeline.StatusFailed, pipeline.StatusCancelled:
 		query += `, completed_at = now()`
 	}
-	query += ` WHERE id = $2`
+	query += ` WHERE id = $4`
 	args = append(args, jobID)
 
 	result, err := s.db.ExecContext(ctx, query, args...)

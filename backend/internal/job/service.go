@@ -18,7 +18,7 @@ type JobService struct {
 	resultStore ResultStore
 	errorStore  ErrorStore
 
-	mu          sync.Mutex 
+	mu          sync.Mutex
 	cancelFuncs map[int]context.CancelFunc
 	trackers    map[int]*pipeline.Tracker
 }
@@ -47,7 +47,7 @@ func (s *JobService) CreateJob(ctx context.Context, spec pipeline.JobSpec) (mode
 	if err != nil {
 		return models.Job{}, err
 	}
-	
+
 	s.startJob(newJob.ID, spec)
 	return newJob, nil
 }
@@ -56,7 +56,7 @@ func (s *JobService) startJob(jobID int, spec pipeline.JobSpec) {
 
 	tracker := pipeline.NewTracker(func(e pipeline.ProcessError) {
 		if err := s.errorStore.InsertError(context.Background(), e.ToJobError()); err != nil {
-		    fmt.Printf("failed to persist job error: %v\n", err)
+			fmt.Printf("failed to persist job error: %v\n", err)
 		}
 	})
 
@@ -65,7 +65,7 @@ func (s *JobService) startJob(jobID int, spec pipeline.JobSpec) {
 	s.trackers[jobID] = tracker
 	s.mu.Unlock()
 
-	if err := s.store.UpdateStatus(context.Background(), jobID, pipeline.StatusRunning); err != nil {
+	if err := s.store.UpdateStatusAndMetrics(context.Background(), jobID, pipeline.StatusRunning, 0, 0); err != nil {
 		fmt.Printf("failed to mark job running: %v\n", err)
 	}
 
@@ -75,7 +75,7 @@ func (s *JobService) startJob(jobID int, spec pipeline.JobSpec) {
 				return s.resultStore.InsertResults(ctx, results)
 			})
 
-		if err := s.store.UpdateStatus(context.Background(), jobID, status); err != nil {
+		if err := s.store.UpdateStatusAndMetrics(context.Background(), jobID, status, tracker.Processed(), tracker.Errors()); err != nil {
 			fmt.Printf("failed to update final status: %v\n", err)
 		}
 
@@ -84,7 +84,6 @@ func (s *JobService) startJob(jobID int, spec pipeline.JobSpec) {
 		s.mu.Unlock()
 	}()
 }
-
 
 func (s *JobService) GetJob(ctx context.Context, id int) (models.Job, error) {
 	return s.store.GetJob(ctx, id)
@@ -115,24 +114,35 @@ func (s *JobService) CancelJob(ctx context.Context, id int) error {
 		return errors.New("job is not running")
 	}
 	cancel()
-	return s.store.UpdateStatus(ctx, id, pipeline.StatusCancelled)
+	return s.store.UpdateStatusAndMetrics(ctx, id, pipeline.StatusCancelled, 0, 0) // Metrics might be overwritten if the pipeline.Run finishes and calls it again, which is fine.
 }
 
-func (s *JobService) GetProgress(ctx context.Context, id int) (models.Job, int64, error) {
+func (s *JobService) GetProgress(ctx context.Context, id int) (models.Job, int64, int64, map[string]string, error) {
 	j, err := s.store.GetJob(ctx, id)
 	if err != nil {
-		return models.Job{}, 0, err
+		return models.Job{}, 0, 0, nil, err
 	}
 
 	s.mu.Lock()
 	tracker, ok := s.trackers[id]
 	s.mu.Unlock()
 
-	var processed int64
+	var processed, errCount int64
+	var stageLatencies map[string]string
 	if ok {
 		processed = tracker.Processed()
+		errCount = tracker.Errors()
+
+		latencies := tracker.StageLatencies()
+		stageLatencies = make(map[string]string, len(latencies))
+		for k, v := range latencies {
+			stageLatencies[k] = v.String()
+		}
+	} else {
+		processed = int64(j.ProcessedRecords)
+		errCount = int64(j.ErrorCount)
 	}
-	return j, processed, nil
+	return j, processed, errCount, stageLatencies, nil
 }
 
 func (s *JobService) GetResults(ctx context.Context, id int) ([]models.Result, error) {
