@@ -18,6 +18,7 @@ func New(cfg *config.Config, pool *sql.DB) *http.Server {
 	limiter := middleware.NewRateLimiter(10, 20)
 
 	handler := limiter.Middleware(router)
+	handler = middleware.CorsMiddleware(cfg.CorsOrigin)(handler)
 	handler = middleware.LoggingMiddleware(handler)
 
 	return &http.Server{
