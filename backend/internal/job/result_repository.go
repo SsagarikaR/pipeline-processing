@@ -8,12 +8,7 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
-type ResultStore interface {
-	InsertResults(ctx context.Context, results []models.Result) error
-	GetResultsByJob(ctx context.Context, jobID int) ([]models.Result, error)
-}
 
-type postgresResultStore struct{ db *sql.DB }
 
 func NewResultStore(db *sql.DB) ResultStore { return &postgresResultStore{db: db} }
 

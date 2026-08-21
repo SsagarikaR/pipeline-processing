@@ -8,12 +8,7 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
-type ErrorStore interface {
-	InsertError(ctx context.Context, e models.JobError) error
-	GetErrorsByJob(ctx context.Context, jobID int) ([]models.JobError, error)
-}
 
-type postgresErrorStore struct{ db *sql.DB }
 
 func NewErrorStore(db *sql.DB) ErrorStore { return &postgresErrorStore{db: db} }
 

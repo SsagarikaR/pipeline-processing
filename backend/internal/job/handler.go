@@ -13,9 +13,7 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/pipeline"
 )
 
-type pipelineHandler struct {
-	service *JobService
-}
+
 
 func NewPipelineHandler(service *JobService) *pipelineHandler {
 	return &pipelineHandler{service: service}

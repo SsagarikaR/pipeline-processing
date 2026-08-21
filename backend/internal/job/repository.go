@@ -11,18 +11,7 @@ import (
 	
 )
 
-type JobStore interface {
-	CreateJob(ctx context.Context, spec json.RawMessage) (models.Job, error)
-	GetJob(ctx context.Context, jobID int) (models.Job, error)
-	GetAllJobs(ctx context.Context) ([]models.Job, error)
-	DeleteJobs(ctx context.Context, jobID int)(error)
-	UpdateStatusAndMetrics(ctx context.Context, jobID int, status string, processed int64, errors int64) error
-	UpdateExportURL(ctx context.Context, jobID int, url string) error
-}
 
-type postgresJobStore struct {
-	db *sql.DB
-}
 
 func NewJobStore(db *sql.DB) JobStore {
 	return &postgresJobStore{db: db}

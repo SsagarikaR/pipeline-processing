@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sync"
 
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 	"github.com/SsagarikaR/pipeline-processing/internal/pipeline"
@@ -13,15 +12,7 @@ import (
 
 var ErrInvalidJobType = errors.New("invalid job type")
 
-type JobService struct {
-	store       JobStore
-	resultStore ResultStore
-	errorStore  ErrorStore
 
-	mu          sync.Mutex
-	cancelFuncs map[int]context.CancelFunc
-	trackers    map[int]*pipeline.Tracker
-}
 
 func NewJobService(store JobStore, resultStore ResultStore, errorStore ErrorStore) *JobService {
 	return &JobService{
