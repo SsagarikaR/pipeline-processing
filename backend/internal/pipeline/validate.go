@@ -35,8 +35,17 @@ func runValidation(ctx context.Context, jobID int, in <-chan Record, workers int
 					}
 					if err := defaultValidator(r); err != nil {
 						slog.Error("validate stage failed", "job_id", jobID, "error", err)
-						errCh <- ProcessError{JobID: jobID, Stage: "validate", Record: &r, Message: err.Error()}
-						progressCh <- struct{}{}
+						select {
+						case errCh <- ProcessError{JobID: jobID, Stage: "validate", Record: &r, Message: err.Error()}:
+						case <-ctx.Done():
+							return
+						}
+						
+						select {
+						case progressCh <- struct{}{}:
+						case <-ctx.Done():
+							return
+						}
 						continue
 					}
 					select {

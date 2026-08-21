@@ -32,7 +32,11 @@ func runTransform(ctx context.Context, jobID int, in <-chan Record, transforms [
 						fn, ok := GetTransformer(tc.Name)
 						if !ok {
 							slog.Error("transform stage failed: unknown transform", "job_id", jobID, "transform", tc.Name)
-							errCh <- ProcessError{JobID: jobID, Stage: "transform", Record: &r, Message: "unknown transform: " + tc.Name}
+							select {
+							case errCh <- ProcessError{JobID: jobID, Stage: "transform", Record: &r, Message: "unknown transform: " + tc.Name}:
+							case <-ctx.Done():
+								return
+							}
 							failed = true
 							break
 						}
@@ -40,7 +44,11 @@ func runTransform(ctx context.Context, jobID int, in <-chan Record, transforms [
 						out, err = fn(out, tc.Params)
 						if err != nil {
 							slog.Error("transform stage failed", "job_id", jobID, "transform", tc.Name, "error", err)
-							errCh <- ProcessError{JobID: jobID, Stage: "transform", Record: &r, Message: err.Error()}
+							select {
+							case errCh <- ProcessError{JobID: jobID, Stage: "transform", Record: &r, Message: err.Error()}:
+							case <-ctx.Done():
+								return
+							}
 							failed = true
 							break
 						}
@@ -69,7 +77,12 @@ func init() {
 	RegisterTransformer("lowercase", func(r Record, params map[string]any) (Record, error) {
 		if field, ok := params["field"].(string); ok {
 			if val, ok := r.Data[field].(string); ok {
-				r.Data[field] = strings.ToLower(val)
+				newData := make(map[string]any, len(r.Data))
+				for k, v := range r.Data {
+					newData[k] = v
+				}
+				newData[field] = strings.ToLower(val)
+				r.Data = newData
 			}
 		}
 		return r, nil
@@ -78,7 +91,12 @@ func init() {
 	RegisterTransformer("uppercase", func(r Record, params map[string]any) (Record, error) {
 		if field, ok := params["field"].(string); ok {
 			if val, ok := r.Data[field].(string); ok {
-				r.Data[field] = strings.ToUpper(val)
+				newData := make(map[string]any, len(r.Data))
+				for k, v := range r.Data {
+					newData[k] = v
+				}
+				newData[field] = strings.ToUpper(val)
+				r.Data = newData
 			}
 		}
 		return r, nil
