@@ -42,6 +42,17 @@ func (m *mockJobStore) UpdateStatusAndMetrics(ctx context.Context, jobID int, st
 	return nil
 }
 
+func (m *mockJobStore) UpdateExportURL(ctx context.Context, jobID int, url string) error {
+	j, ok := m.Jobs[jobID]
+	if !ok {
+		return sql.ErrNoRows
+	}
+	u := url
+	j.ExportURL = &u
+	m.Jobs[jobID] = j
+	return nil
+}
+
 func (m *mockJobStore) GetJob(ctx context.Context, id int) (models.Job, error) {
 	j, ok := m.Jobs[id]
 	if !ok {

@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
@@ -17,7 +18,6 @@ func TestEngineRun_Success(t *testing.T) {
 	// Create a temporary JSON file to ingest
 	tmpDir := t.TempDir()
 	sourcePath := filepath.Join(tmpDir, "input.json")
-	exportPath := filepath.Join(tmpDir, "output.json")
 
 	data := `[
 		{"Height(Inches)": 65.0, "Weight(Pounds)": 150.0},
@@ -36,9 +36,6 @@ func TestEngineRun_Success(t *testing.T) {
 			{Field: "Height(Inches)", Op: "avg"},
 			{Field: "Weight(Pounds)", Op: "sum"},
 		},
-		Exports: []ExportConfig{
-			{Type: "json", Path: exportPath},
-		},
 		Concurrency: ConcurrencyConfig{
 			ValidateWorkers:  2,
 			TransformWorkers: 2,
@@ -53,12 +50,17 @@ func TestEngineRun_Success(t *testing.T) {
 		}
 		return nil
 	}
+	urlStore := func(ctx context.Context, url string) error {
+		return nil
+	}
 
-	status := Run(context.Background(), 1, spec, tracker, resultStore)
+	status := Run(context.Background(), 1, spec, tracker, resultStore, urlStore)
 
 	if status != StatusCompleted {
 		t.Errorf("expected status %s, got %s", StatusCompleted, status)
 	}
+
+	time.Sleep(50 * time.Millisecond)
 
 	if tracker.Processed() != 2 {
 		t.Errorf("expected 2 processed records, got %d", tracker.Processed())
@@ -90,8 +92,11 @@ func TestEngineRun_MalformedSource(t *testing.T) {
 	resultStore := func(ctx context.Context, results []models.Result) error {
 		return nil
 	}
+	urlStore := func(ctx context.Context, url string) error {
+		return nil
+	}
 
-	status := Run(context.Background(), 2, spec, tracker, resultStore)
+	status := Run(context.Background(), 2, spec, tracker, resultStore, urlStore)
 
 	if status != StatusFailed {
 		t.Errorf("expected status %s, got %s", StatusFailed, status)
@@ -131,12 +136,17 @@ func TestEngineRun_API_JSON(t *testing.T) {
 	resultStore := func(ctx context.Context, results []models.Result) error {
 		return nil
 	}
+	urlStore := func(ctx context.Context, url string) error {
+		return nil
+	}
 
-	status := Run(context.Background(), 3, spec, tracker, resultStore)
+	status := Run(context.Background(), 3, spec, tracker, resultStore, urlStore)
 
 	if status != StatusCompleted {
 		t.Errorf("expected status %s, got %s", StatusCompleted, status)
 	}
+
+	time.Sleep(50 * time.Millisecond)
 
 	if tracker.Processed() != 2 {
 		t.Errorf("expected 2 processed records, got %d", tracker.Processed())

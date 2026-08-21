@@ -49,7 +49,7 @@ func TestCreateJob_Success(t *testing.T) {
 func TestCreateJob_InvalidSpec(t *testing.T) {
 	h, _, _, _ := setupTestHandler()
 
-	spec := pipeline.JobSpec{} // Empty spec triggers ErrInvalidJobType
+	spec := pipeline.JobSpec{} 
 	body, _ := json.Marshal(spec)
 
 	req := httptest.NewRequest(http.MethodPost, "/pipelines", bytes.NewReader(body))
@@ -81,7 +81,6 @@ func TestCancelJob_Success(t *testing.T) {
 	h, js, _, _ := setupTestHandler()
 	js.Jobs[1] = models.Job{ID: 1, Status: pipeline.StatusRunning}
 
-	// Since cancel requires the job to be running in service, we'll manually inject it
 	_, cancel := context.WithCancel(context.Background())
 	h.service.mu.Lock()
 	h.service.cancelFuncs[1] = cancel
