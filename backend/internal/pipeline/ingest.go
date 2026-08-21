@@ -150,7 +150,10 @@ func runIngestion(ctx context.Context, jobID int, sources []SourceConfig, errCh 
 		ingester, ok := GetIngester(src.Type)
 		if !ok {
 			slog.Error("ingest stage failed: unknown source type", "job_id", jobID, "type", src.Type)
-			errCh <- ProcessError{JobID: jobID, Stage: "ingest", Message: "unknown source type: " + src.Type}
+			select {
+			case errCh <- ProcessError{JobID: jobID, Stage: "ingest", Message: "unknown source type: " + src.Type}:
+			case <-ctx.Done():
+			}
 			continue
 		}
 		wg.Add(1)
@@ -158,7 +161,10 @@ func runIngestion(ctx context.Context, jobID int, sources []SourceConfig, errCh 
 			defer wg.Done()
 			if err := ing.Ingest(ctx, cfg, recordsCh); err != nil && err != context.Canceled {
 				slog.Error("ingest stage failed", "job_id", jobID, "source", cfg.Path, "error", err)
-				errCh <- ProcessError{JobID: jobID, Stage: "ingest", Message: err.Error()}
+				select {
+				case errCh <- ProcessError{JobID: jobID, Stage: "ingest", Message: err.Error()}:
+				case <-ctx.Done():
+				}
 			}
 		}(src, ingester)
 	}
