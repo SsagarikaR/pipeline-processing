@@ -15,7 +15,7 @@ type Validator func(r Record) error
 type Transformer func(r Record, params map[string]any) (Record, error)
 
 type Exporter interface {
-	Export(ctx context.Context, cfg ExportConfig, records []Record, results []models.Result) error
+	Export(ctx context.Context, cfg ExportConfig, records []Record, results []models.Result) (string, error)
 }
 
 var (

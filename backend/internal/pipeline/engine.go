@@ -7,7 +7,7 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
-func Run(ctx context.Context, jobID int, spec JobSpec, tracker *Tracker, resultStore func(ctx context.Context, results []models.Result) error) string {
+func Run(ctx context.Context, jobID int, spec JobSpec, tracker *Tracker, resultStore func(ctx context.Context, results []models.Result) error, storeURL func(ctx context.Context, url string) error) string {
 	slog.Info("pipeline started", "job_id", jobID)
 	tracker.Run()
 	defer tracker.Close()
@@ -16,7 +16,7 @@ func Run(ctx context.Context, jobID int, spec JobSpec, tracker *Tracker, resultS
 	validatedCh := runValidation(ctx, jobID, recordsCh, spec.Concurrency.ValidateWorkers, tracker.errCh, tracker.progressCh)
 	transformedCh := runTransform(ctx, jobID, validatedCh, spec.Transforms, spec.Concurrency.TransformWorkers, tracker.errCh)
 	aggCh := runAggregation(ctx, jobID, transformedCh, spec.Aggregations, tracker.progressCh)
-	doneCh := runExport(ctx, jobID, aggCh, spec.Exports, resultStore, tracker.errCh)
+	doneCh := runExport(ctx, jobID, aggCh, spec.Exports, resultStore, storeURL, tracker.errCh)
 
 	select {
 	case <-doneCh:

@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -106,6 +107,20 @@ func (jsonIngester) Ingest(ctx context.Context, cfg SourceConfig, out chan<- Rec
 }
 
 func openSource(path string) (io.Reader, func(), error) {
+	if strings.HasPrefix(path, "data:") {
+		parts := strings.SplitN(path, ",", 2)
+		if len(parts) != 2 {
+			return nil, nil, fmt.Errorf("invalid data url format")
+		}
+		
+		var r io.Reader
+		if strings.Contains(parts[0], ";base64") {
+			r = base64.NewDecoder(base64.StdEncoding, strings.NewReader(parts[1]))
+		} else {
+			r = strings.NewReader(parts[1])
+		}
+		return r, func() {}, nil
+	}
 	if strings.HasPrefix(path, "http") {
 		resp, err := http.Get(path)
 		if err != nil {

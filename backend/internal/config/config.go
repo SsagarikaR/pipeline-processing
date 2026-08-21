@@ -10,7 +10,8 @@ type Config struct {
 	LogLevel   string
 	LogFormat  string
 	CorsOrigin string
-	
+	DB         DBConfig
+	S3         S3Config
 }
 
 type S3Config struct {
@@ -30,11 +31,15 @@ type DBConfig struct {
 
 func LoadConfig() *Config {
 	return &Config{
-		Port:      GetEnv("PORT", "8080"),
-		LogLevel:  GetEnv("LOG_LEVEL", "info"),
-		LogFormat: GetEnv("LOG_FORMAT", "json"),
+		Port:       GetEnv("PORT", "8080"),
+		LogLevel:   GetEnv("LOG_LEVEL", "info"),
+		LogFormat:  GetEnv("LOG_FORMAT", "json"),
 		CorsOrigin: GetEnv("CORS_ORIGIN", "http://localhost:5173"),
-		
+		S3: S3Config{
+			Bucket:   GetEnv("S3_BUCKET", "pipeline-bucket"),
+			Endpoint: GetEnv("S3_ENDPOINT", "http://localhost:4566"),
+			Region:   GetEnv("AWS_REGION", "us-east-1"),
+		},
 		DB: DBConfig{
 			Host:     GetEnv("POSTGRES_HOST", "localhost"),
 			Port:     GetEnv("POSTGRES_PORT", "5432"),

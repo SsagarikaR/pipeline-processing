@@ -70,18 +70,23 @@ func (s *JobService) startJob(jobID int, spec pipeline.JobSpec) {
 	}
 
 	go func() {
+		defer func() {
+			s.mu.Lock()
+			delete(s.cancelFuncs, jobID)
+			s.mu.Unlock()
+		}()
+
 		status := pipeline.Run(runCtx, jobID, spec, tracker,
 			func(ctx context.Context, results []models.Result) error {
 				return s.resultStore.InsertResults(ctx, results)
+			},
+			func(ctx context.Context, url string) error {
+				return s.store.UpdateExportURL(ctx, jobID, url)
 			})
 
 		if err := s.store.UpdateStatusAndMetrics(context.Background(), jobID, status, tracker.Processed(), tracker.Errors()); err != nil {
 			fmt.Printf("failed to update final status: %v\n", err)
 		}
-
-		s.mu.Lock()
-		delete(s.cancelFuncs, jobID)
-		s.mu.Unlock()
 	}()
 }
 

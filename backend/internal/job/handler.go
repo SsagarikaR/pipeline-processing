@@ -217,7 +217,8 @@ func (h *pipelineHandler) GetProgress(w http.ResponseWriter, r *http.Request) {
 		StageLatencies  map[string]string `json:"stageLatencies,omitempty"`
 		StartedAt       any               `json:"startedAt"`
 		CompletedAt     any               `json:"completedAt"`
-	}{j.ID, j.Status, processed, errCount, percent, rate, latencies, j.StartedAt, j.CompletedAt}
+		ExportUrl       *string           `json:"exportUrl"`
+	}{j.ID, j.Status, processed, errCount, percent, rate, latencies, j.StartedAt, j.CompletedAt, j.ExportURL}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)

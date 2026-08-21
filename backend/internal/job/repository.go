@@ -17,6 +17,7 @@ type JobStore interface {
 	GetAllJobs(ctx context.Context) ([]models.Job, error)
 	DeleteJobs(ctx context.Context, jobID int)(error)
 	UpdateStatusAndMetrics(ctx context.Context, jobID int, status string, processed int64, errors int64) error
+	UpdateExportURL(ctx context.Context, jobID int, url string) error
 }
 
 type postgresJobStore struct {
@@ -32,7 +33,7 @@ func (s *postgresJobStore) CreateJob(ctx context.Context, spec json.RawMessage) 
 	err := s.db.QueryRowContext(ctx, `
 	    INSERT INTO jobs (status,spec)
 		VALUES ('pending', $1) 
-		RETURNING id, status, spec, total_records, processed_records, error_count, created_at, started_at, completed_at
+		RETURNING id, status, spec, total_records, processed_records, error_count, created_at, started_at, completed_at, export_url
 	`,spec).Scan(
 		&job.ID,
 		&job.Status,
@@ -43,6 +44,7 @@ func (s *postgresJobStore) CreateJob(ctx context.Context, spec json.RawMessage) 
 		&job.CreatedAt,
 		&job.StartedAt,
 		&job.CompletedAt,
+		&job.ExportURL,
 	)
 
 	if err != nil {
@@ -54,7 +56,7 @@ func (s *postgresJobStore) CreateJob(ctx context.Context, spec json.RawMessage) 
 func (s *postgresJobStore) GetJob(ctx context.Context, jobID int) (models.Job, error) {
 	var job models.Job
 	err := s.db.QueryRowContext(ctx, `
-	    SELECT id, status, spec, total_records, processed_records, error_count, created_at, started_at, completed_at
+	    SELECT id, status, spec, total_records, processed_records, error_count, created_at, started_at, completed_at, export_url
 		FROM jobs
 		WHERE id = $1
 	`,jobID).Scan(
@@ -67,6 +69,7 @@ func (s *postgresJobStore) GetJob(ctx context.Context, jobID int) (models.Job, e
 		&job.CreatedAt,
 		&job.StartedAt,
 		&job.CompletedAt,
+		&job.ExportURL,
 	)
 
 	if err != nil {
@@ -79,7 +82,7 @@ func (s *postgresJobStore) GetAllJobs(ctx context.Context) ([]models.Job, error)
 	var jobs []models.Job
 	rows, err := s.db.QueryContext(ctx, `
 	    SELECT id, status, spec, total_records, processed_records, 
-	    error_count, created_at, started_at, completed_at
+	    error_count, created_at, started_at, completed_at, export_url
 		FROM jobs
 	`)
 
@@ -100,6 +103,7 @@ func (s *postgresJobStore) GetAllJobs(ctx context.Context) ([]models.Job, error)
 			&job.CreatedAt,
 			&job.StartedAt,
 			&job.CompletedAt,
+			&job.ExportURL,
 		)
 		if err != nil {
 			return jobs, fmt.Errorf("store: failed to scan job: %w", err)
@@ -148,6 +152,21 @@ func (s *postgresJobStore) UpdateStatusAndMetrics(ctx context.Context, jobID int
 	rows, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("store: update status rows affected: %w", err)
+	}
+	if rows == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
+func (s *postgresJobStore) UpdateExportURL(ctx context.Context, jobID int, url string) error {
+	result, err := s.db.ExecContext(ctx, `UPDATE jobs SET export_url = $1 WHERE id = $2`, url, jobID)
+	if err != nil {
+		return fmt.Errorf("store update export url: %w", err)
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("store update export url rows affected: %w", err)
 	}
 	if rows == 0 {
 		return sql.ErrNoRows
