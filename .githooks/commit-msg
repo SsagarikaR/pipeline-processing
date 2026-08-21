@@ -8,7 +8,7 @@ if [[ "$first_line" =~ ^(Merge\ |Revert\ \") ]]; then
   exit 0
 fi
 
-pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\([a-zA-Z0-9_.-]+\))?!?: .{1,88}$'
+pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\([a-zA-Z0-9_. ,-]+\))?!?: .{1,150}$'
 
 if [[ ! "$first_line" =~ $pattern ]]; then
   echo "commit-msg hook: rejected - message doesn't follow Conventional Commits" >&2
