@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/SsagarikaR/pipeline-processing/internal/config"
-	"github.com/SsagarikaR/pipeline-processing/middleware"
+	"github.com/SsagarikaR/pipeline-processing/internal/middleware"
 )
 
 func New(cfg *config.Config, pool *sql.DB) *http.Server {
