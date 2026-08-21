@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 	"fmt"
+	"strings"
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
@@ -39,11 +40,24 @@ func runAggregation(ctx context.Context, jobID int, in <-chan Record, configs []
 	return outCh
 }
 
+func getValueIgnoringSpace(data map[string]any, target string) (any, bool) {
+	if v, ok := data[target]; ok {
+		return v, true
+	}
+	t := strings.TrimSpace(target)
+	for k, v := range data {
+		if strings.TrimSpace(k) == t {
+			return v, true
+		}
+	}
+	return nil, false
+}
+
 func accumulate(r Record, configs []AggregationConfig, sums map[string]float64, counts map[string]int) {
 	for _, c := range configs {
 		key := groupKeyFor(c, r)
 		counts[key]++
-		if v, ok := r.Data[c.Field]; ok {
+		if v, ok := getValueIgnoringSpace(r.Data, c.Field); ok {
 			if f, ok := toFloat(v); ok {
 				sums[key] += f
 			}
@@ -56,7 +70,7 @@ func groupKeyFor(c AggregationConfig, r Record) string {
 	if c.GroupBy == "" {
 		return base
 	}
-	if gv, ok := r.Data[c.GroupBy]; ok {
+	if gv, ok := getValueIgnoringSpace(r.Data, c.GroupBy); ok {
 		return fmt.Sprintf("%s:%v", base, gv)
 	}
 	return base
