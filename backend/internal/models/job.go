@@ -1,15 +1,21 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type Job struct {
-	ID                 int         `json:"id"`
-	Status             string      `json:"status"`
-	TotalRecords       int         `json:"total_records"`
-	ProcessedRecords   int         `json:"processed_records"`
-	ErrorCount         int         `json:"error_count"`
-	CreatedAt          time.Time   `json:"created_at"`
-	CompletedAt        *time.Time  `json:"completed_at"` //Pointer because it can be null
+	ID                 int            `json:"id"`
+	Status             string         `json:"status"`
+	Spec               json.RawMessage`json:"spec"`
+	TotalRecords       int            `json:"total_records"`
+	ProcessedRecords   int            `json:"processed_records"`
+	ErrorCount         int            `json:"error_count"`
+	CreatedAt          time.Time      `json:"created_at"`
+	StartedAt          *time.Time     `json:"started_at"`
+	CompletedAt        *time.Time     `json:"completed_at"`
+	ExportURL          *string        `json:"export_url"`
 }
 
 type Result struct {

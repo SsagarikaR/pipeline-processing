@@ -12,10 +12,15 @@ import (
 
 	"github.com/SsagarikaR/pipeline-processing/internal/config"
 	"github.com/SsagarikaR/pipeline-processing/internal/db"
-	"github.com/SsagarikaR/pipeline-processing/internal/logger"
+	"github.com/SsagarikaR/pipeline-processing/pkg/logger"
 	"github.com/SsagarikaR/pipeline-processing/internal/server"
 )
 
+// @title Pipeline Processing API
+// @version 1.0
+// @description This is a data processing pipeline API.
+// @host localhost:8081
+// @BasePath /
 func main() {
 	if err := run(); err != nil {
 		slog.Error("startup failed", "err", err)

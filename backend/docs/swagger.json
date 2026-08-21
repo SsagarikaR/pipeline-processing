@@ -1,0 +1,495 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a data processing pipeline API.",
+        "title": "Pipeline Processing API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8081",
+    "basePath": "/",
+    "paths": {
+        "/api/v1/pipelines": {
+            "get": {
+                "description": "Get a list of all pipeline jobs",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get all pipeline jobs",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_SsagarikaR_pipeline-processing_internal_models.Job"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new pipeline job with specified input, transform, aggregate, and export stages",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create a pipeline job",
+                "parameters": [
+                    {
+                        "description": "Job Specification",
+                        "name": "job",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SsagarikaR_pipeline-processing_internal_pipeline.JobSpec"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SsagarikaR_pipeline-processing_internal_models.Job"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/pipelines/{id}/cancel": {
+            "patch": {
+                "description": "Cancel a running pipeline job by ID",
+                "summary": "Cancel a pipeline job",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Job ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/pipelines/{id}/errors": {
+            "get": {
+                "description": "Retrieve job errors and failed records for a specific pipeline job by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get pipeline errors",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Job ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_SsagarikaR_pipeline-processing_internal_models.JobError"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/pipelines/{id}/progress": {
+            "get": {
+                "description": "Get progress and metrics of a specific pipeline job by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get pipeline progress",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Job ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {}
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/pipelines/{id}/results": {
+            "get": {
+                "description": "Retrieve results for a specific pipeline job by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get pipeline results",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Job ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_SsagarikaR_pipeline-processing_internal_models.Result"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1pipelines/{id}": {
+            "delete": {
+                "description": "Delete a specific pipeline job and its artifacts by ID",
+                "summary": "Delete a pipeline job",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Job ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/pipelines/{id}": {
+            "get": {
+                "description": "Get details of a specific pipeline job by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get a pipeline job",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Job ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_SsagarikaR_pipeline-processing_internal_models.Job"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_SsagarikaR_pipeline-processing_internal_models.Job": {
+            "type": "object",
+            "properties": {
+                "completed_at": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "error_count": {
+                    "type": "integer"
+                },
+                "export_url": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "processed_records": {
+                    "type": "integer"
+                },
+                "spec": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "started_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "total_records": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_SsagarikaR_pipeline-processing_internal_models.JobError": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "error_message": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "job_id": {
+                    "type": "integer"
+                },
+                "record_data": {
+                    "type": "string"
+                },
+                "stage": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SsagarikaR_pipeline-processing_internal_models.Result": {
+            "type": "object",
+            "properties": {
+                "aggregated_value": {
+                    "type": "number"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "group_key": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "job_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_SsagarikaR_pipeline-processing_internal_pipeline.AggregationConfig": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "type": "string"
+                },
+                "groupBy": {
+                    "type": "string"
+                },
+                "op": {
+                    "description": "\"sum\" | \"avg\" | \"count\" | \"min\" | \"max\"",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SsagarikaR_pipeline-processing_internal_pipeline.ConcurrencyConfig": {
+            "type": "object",
+            "properties": {
+                "transformWorkers": {
+                    "type": "integer"
+                },
+                "validateWorkers": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_SsagarikaR_pipeline-processing_internal_pipeline.ExportConfig": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string"
+                },
+                "type": {
+                    "description": "\"csv\" | \"json\" | \"db\"",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SsagarikaR_pipeline-processing_internal_pipeline.JobSpec": {
+            "type": "object",
+            "properties": {
+                "aggregations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_SsagarikaR_pipeline-processing_internal_pipeline.AggregationConfig"
+                    }
+                },
+                "concurrency": {
+                    "$ref": "#/definitions/github_com_SsagarikaR_pipeline-processing_internal_pipeline.ConcurrencyConfig"
+                },
+                "exports": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_SsagarikaR_pipeline-processing_internal_pipeline.ExportConfig"
+                    }
+                },
+                "sources": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_SsagarikaR_pipeline-processing_internal_pipeline.SourceConfig"
+                    }
+                },
+                "transforms": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_SsagarikaR_pipeline-processing_internal_pipeline.TransformConfig"
+                    }
+                }
+            }
+        },
+        "github_com_SsagarikaR_pipeline-processing_internal_pipeline.SourceConfig": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string"
+                },
+                "type": {
+                    "description": "\"csv\" | \"json\" | \"api\"",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_SsagarikaR_pipeline-processing_internal_pipeline.TransformConfig": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "params": {
+                    "type": "object",
+                    "additionalProperties": {}
+                }
+            }
+        }
+    }
+}

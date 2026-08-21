@@ -8,17 +8,22 @@ import (
 	"time"
 
 	"github.com/SsagarikaR/pipeline-processing/internal/config"
-	"github.com/SsagarikaR/pipeline-processing/internal/handler"
+	"github.com/SsagarikaR/pipeline-processing/internal/middleware"
 )
 
 func New(cfg *config.Config, pool *sql.DB) *http.Server {
-	mux := http.NewServeMux()
+	router := mapRoutes(pool)
 
-	mux.HandleFunc("GET /health", handler.Health(pool))
+	// Create a rate limiter allowing 10 requests per second with a burst of 20
+	limiter := middleware.NewRateLimiter(10, 20)
+
+	handler := limiter.Middleware(router)
+	handler = middleware.CorsMiddleware(cfg.CorsOrigin)(handler)
+	handler = middleware.LoggingMiddleware(handler)
 
 	return &http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      mux,
+		Handler:      handler,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,

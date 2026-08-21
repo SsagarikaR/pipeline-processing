@@ -1,4 +1,8 @@
-include ../.env
+ifneq (,$(wildcard ../.env))
+    include ../.env
+    export
+endif
+
 
 GOBIN := $(shell go env GOPATH)/bin
 
@@ -29,13 +33,16 @@ test:
 tidy: 
 	go mod tidy
 
-build:
+swagger:
+	go run github.com/swaggo/swag/cmd/swag@latest init -g cmd/server/main.go --parseDependency --parseInternal
+
+build: swagger
 	go build -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/server
 
 run: build 
 	./$(BUILD_DIR)/$(BINARY_NAME)
 
-check: fmt vet lint test 
+check: fmt vet lint test swagger 
 
 hooks:
 	git config core.hooksPath ../.githooks
