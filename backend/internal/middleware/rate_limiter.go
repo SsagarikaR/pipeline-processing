@@ -2,23 +2,12 @@ package middleware
 
 import (
 	"net/http"
-	"sync"
 	"time"
 
 	"golang.org/x/time/rate"
 )
 
-type rateLimiter struct {
-	visitors map[string]*visitor
-	mu       sync.RWMutex
-	rate     rate.Limit
-	burst    int
-}
 
-type visitor struct {
-	limiter  *rate.Limiter
-	lastSeen time.Time
-}
 
 func NewRateLimiter(r rate.Limit, b int) *rateLimiter {
 	rl := &rateLimiter{
