@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
-import { api } from '../service/client';
+import { jobService as api } from '../service/jobService';
 import type { Job } from '../types/job';
 import StatusBadge from '../components/StatusBadge';
 import AppButton from '../components/AppButton';
