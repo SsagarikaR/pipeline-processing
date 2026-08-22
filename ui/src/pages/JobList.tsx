@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, WifiOff } from 'lucide-react';
 import { jobService as api } from '../service/jobService';
 import type { Job } from '../types/job';
 import StatusBadge from '../components/StatusBadge';
 import AppButton from '../components/AppButton';
 import ConfirmModal from '../components/ConfirmModal';
+import CreateJobModal from '../components/CreateJobModal';
 import { ROUTES, COMMON_LABELS } from '../constants/common';
 import { JOB_LIST_TEXTS } from '../constants/jobList';
 
@@ -16,6 +17,7 @@ export default function JobList() {
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
   const [deleteJobId, setDeleteJobId] = useState<number | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   async function loadJobs() {
     setLoading(true);
@@ -52,7 +54,6 @@ export default function JobList() {
   }
 
   if (loading) return <div className="p-8 text-neutral-500">{JOB_LIST_TEXTS.LOADING_JOBS}</div>;
-  if (error) return <div className="p-8 text-danger-600">{error}</div>;
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -75,13 +76,22 @@ export default function JobList() {
           >
             <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
           </AppButton>
-          <Link to={ROUTES.CREATE_JOB} className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors inline-flex items-center justify-center">
+          <AppButton onClick={() => setIsCreateOpen(true)}>
             {JOB_LIST_TEXTS.NEW_JOB}
-          </Link>
+          </AppButton>
         </div>
       </div>
 
-      {jobs.length === 0 ? (
+      {error ? (
+        <div className="text-center py-16 text-neutral-400 border-2 border-dashed rounded-xl">
+          <WifiOff size={28} className="mx-auto mb-3 text-neutral-300" />
+          <p className="text-neutral-500 font-medium">{JOB_LIST_TEXTS.NO_JOBS_FOUND}</p>
+          <p className="text-xs text-neutral-400 mt-1">{error}</p>
+          <AppButton variant="secondary" size="sm" onClick={loadJobs} className="mt-4">
+            {COMMON_LABELS.REFRESH}
+          </AppButton>
+        </div>
+      ) : jobs.length === 0 ? (
         <div className="text-center py-16 text-neutral-400 border-2 border-dashed rounded-xl">
           {JOB_LIST_TEXTS.NO_JOBS}
         </div>
@@ -112,13 +122,14 @@ export default function JobList() {
         </div>
       )}
 
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={deleteJobId !== null}
         title={JOB_LIST_TEXTS.DELETE_MODAL_TITLE}
         message={deleteJobId ? JOB_LIST_TEXTS.deleteModalMessage(deleteJobId) : ''}
         onConfirm={handleDelete}
         onCancel={() => setDeleteJobId(null)}
       />
+      <CreateJobModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
     </div>
   );
 }

@@ -1,6 +1,5 @@
 export const ROUTES = {
   HOME: '/',
-  CREATE_JOB: '/create',
   JOB_DETAIL: '/jobs/:id',
   jobDetail: (id: string | number) => `/jobs/${id}`,
 };

@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import JobList from './pages/JobList';
-import CreateJob from './pages/CreateJob';
 import JobDetail from './pages/JobDetail';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Toaster } from 'react-hot-toast';
@@ -13,7 +12,6 @@ export default function App() {
         <div className="min-h-screen bg-neutral-50">
           <Routes>
             <Route path={ROUTES.HOME} element={<JobList />} />
-            <Route path={ROUTES.CREATE_JOB} element={<CreateJob />} />
             <Route path={ROUTES.JOB_DETAIL} element={<JobDetail />} />
           </Routes>
         </div>

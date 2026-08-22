@@ -14,6 +14,11 @@ export interface ConfirmModalProps {
   onCancel: () => void;
 }
 
+export interface CreateJobModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
 export interface StatusBadgeProps {
   status: JobStatus;
 }
