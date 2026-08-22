@@ -1,13 +1,6 @@
-import React from 'react';
 import AppButton from './AppButton';
 
-interface ConfirmModalProps {
-  isOpen: boolean;
-  title: string;
-  message: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
+import { ConfirmModalProps } from '../types/common';
 
 export default function ConfirmModal({ isOpen, title, message, onConfirm, onCancel }: ConfirmModalProps) {
   if (!isOpen) return null;

@@ -8,9 +8,7 @@ const STATUS_STYLES: Record<JobStatus, string> = {
   cancelled: 'bg-amber-100 text-amber-700 border-amber-300',
 };
 
-interface StatusBadgeProps {
-  status: JobStatus;
-}
+import { StatusBadgeProps } from '../types/common';
 
 export default function StatusBadge({ status }: StatusBadgeProps) {
   const style = STATUS_STYLES[status] ?? STATUS_STYLES.pending;

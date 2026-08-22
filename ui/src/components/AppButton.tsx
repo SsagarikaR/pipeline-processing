@@ -1,9 +1,4 @@
-import React from 'react';
-
-interface AppButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
-}
+import { AppButtonProps } from '../types/common';
 
 export default function AppButton({ variant = 'primary', size = 'md', className = '', children, ...props }: AppButtonProps) {
   const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
