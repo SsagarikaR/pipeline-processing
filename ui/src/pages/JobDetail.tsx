@@ -7,6 +7,8 @@ import StatusBadge from '../components/StatusBadge';
 import usePolling from '../hooks/usePolling';
 import AppButton from '../components/AppButton';
 import ConfirmModal from '../components/ConfirmModal';
+import { ROUTES, COMMON_LABELS } from '../constants/common';
+import { JOB_DETAIL_TEXTS } from '../constants/jobDetail';
 
 const TERMINAL_STATUSES = ['completed', 'failed', 'cancelled'] as const;
 
@@ -26,7 +28,7 @@ export default function JobDetail() {
     // useParams can technically return undefined if the route param is missing —
     // guard here so every api.* call below can safely assume `id` is a string.
     if (!id) {
-        return <div className="p-8 text-danger-600">Invalid job ID.</div>;
+        return <div className="p-8 text-danger-600">{JOB_DETAIL_TEXTS.INVALID_ID}</div>;
     }
 
     async function handlePreview(e: React.MouseEvent, url: string) {
@@ -44,7 +46,7 @@ export default function JobDetail() {
                 setPreviewData(text);
             }
         } catch(err) {
-            setPreviewData("Failed to load preview.");
+            setPreviewData(JOB_DETAIL_TEXTS.PREVIEW_ERROR);
         } finally {
             setPreviewLoading(false);
         }
@@ -92,32 +94,32 @@ export default function JobDetail() {
         if (id) {
             await api.deleteJob(id);
             setDeleteModalOpen(false);
-            navigate('/');
+            navigate(ROUTES.HOME);
         }
     }
 
     if (progressError) {
-        return <div className="p-8 text-danger-600">Failed to load job — check that it exists.</div>;
+        return <div className="p-8 text-danger-600">{JOB_DETAIL_TEXTS.FETCH_ERROR}</div>;
     }
     if (!progress) {
-        return <div className="p-8 text-neutral-500">Loading…</div>;
+        return <div className="p-8 text-neutral-500">{COMMON_LABELS.LOADING}</div>;
     }
 
     return (
         <div className="max-w-3xl mx-auto p-6">
             <div className="mb-4">
-                <Link to="/" className="text-sm text-brand-600 hover:underline flex items-center gap-1">
-                    <span>←</span> Back to Jobs
+                <Link to={ROUTES.HOME} className="text-sm text-brand-600 hover:underline flex items-center gap-1">
+                    <span>←</span> {COMMON_LABELS.BACK_TO_JOBS.replace('← ', '')}
                 </Link>
             </div>
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                    <h1 className="text-2xl font-semibold text-neutral-900">Job #{progress.jobId}</h1>
+                    <h1 className="text-2xl font-semibold text-neutral-900">{JOB_DETAIL_TEXTS.JOB_TITLE_PREFIX}{progress.jobId}</h1>
                     <StatusBadge status={progress.status} />
                     <button 
                         onClick={handleManualRefresh} 
                         className="p-1.5 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
-                        title="Refresh Job Data"
+                        title={JOB_DETAIL_TEXTS.REFRESH_TITLE}
                     >
                         <RefreshCw size={16} />
                     </button>
@@ -128,14 +130,14 @@ export default function JobDetail() {
                             variant="secondary"
                             onClick={() => setCancelModalOpen(true)}
                         >
-                            Cancel
+                            {COMMON_LABELS.CANCEL}
                         </AppButton>
                     )}
                     <AppButton
                         variant="danger"
                         onClick={() => setDeleteModalOpen(true)}
                     >
-                        Delete
+                        {COMMON_LABELS.DELETE}
                     </AppButton>
                 </div>
             </div>
@@ -148,13 +150,13 @@ export default function JobDetail() {
             </div>
 
             <div className="text-sm text-neutral-500 mb-6 flex gap-6">
-                <span>Started: {progress.startedAt ? new Date(progress.startedAt).toLocaleString() : '—'}</span>
-                <span>Completed: {progress.completedAt ? new Date(progress.completedAt).toLocaleString() : '—'}</span>
+                <span>{JOB_DETAIL_TEXTS.STARTED}{progress.startedAt ? new Date(progress.startedAt).toLocaleString() : '—'}</span>
+                <span>{JOB_DETAIL_TEXTS.COMPLETED}{progress.completedAt ? new Date(progress.completedAt).toLocaleString() : '—'}</span>
                 {progress.exportUrl && (
                     <span>
-                        Export: <a href={progress.exportUrl} target="_blank" rel="noreferrer" className="text-brand-600 hover:underline">{progress.exportUrl}</a>
+                        {JOB_DETAIL_TEXTS.EXPORT}<a href={progress.exportUrl} target="_blank" rel="noreferrer" className="text-brand-600 hover:underline">{progress.exportUrl}</a>
                         <button onClick={(e) => handlePreview(e, progress.exportUrl!)} className="ml-3 text-xs bg-brand-50 text-brand-700 px-2 py-1 rounded hover:bg-brand-100">
-                            Preview
+                            {JOB_DETAIL_TEXTS.PREVIEW_BTN}
                         </button>
                     </span>
                 )}
@@ -164,12 +166,12 @@ export default function JobDetail() {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl flex flex-col max-h-[80vh]">
                         <div className="flex items-center justify-between p-4 border-b">
-                            <h3 className="font-semibold">File Preview</h3>
+                            <h3 className="font-semibold">{JOB_DETAIL_TEXTS.FILE_PREVIEW}</h3>
                             <AppButton variant="ghost" size="sm" onClick={() => {setPreviewData(null); setPreviewLoading(false);}}>✕</AppButton>
                         </div>
                         <div className="p-4 overflow-auto bg-neutral-50 flex-1">
                             {previewLoading ? (
-                                <div className="text-neutral-500 text-center py-8">Loading preview...</div>
+                                <div className="text-neutral-500 text-center py-8">{JOB_DETAIL_TEXTS.LOADING_PREVIEW}</div>
                             ) : (
                                 <pre className="text-xs text-neutral-800 font-mono whitespace-pre-wrap">{previewData}</pre>
                             )}
@@ -187,7 +189,7 @@ export default function JobDetail() {
                             className={`pb-3 text-sm font-medium border-b-2 transition-colors ${tab === t ? 'border-brand-600 text-brand-600' : 'border-transparent text-neutral-500 hover:text-neutral-700'
                                 }`}
                         >
-                            {t === 'results' ? `Results (${results?.length || 0})` : t === 'errors' ? `Errors (${errors?.length || 0})` : 'Live Progress'}
+                            {t === 'results' ? JOB_DETAIL_TEXTS.tabResults(results?.length || 0) : t === 'errors' ? JOB_DETAIL_TEXTS.tabErrors(errors?.length || 0) : JOB_DETAIL_TEXTS.TAB_PROGRESS}
                         </button>
                     ))}
                 </nav>
@@ -195,7 +197,7 @@ export default function JobDetail() {
 
             {tab === 'progress' && (
                 <div className="text-sm text-neutral-600">
-                    {isTerminal ? `Job finished with status "${progress.status}".` : 'Job is running — this page auto-refreshes every 2 seconds.'}
+                    {isTerminal ? JOB_DETAIL_TEXTS.finishedMsg(progress.status) : JOB_DETAIL_TEXTS.RUNNING_MSG}
                 </div>
             )}
             {tab === 'results' && <ResultsTable results={results} isTerminal={isTerminal} />}
@@ -203,15 +205,15 @@ export default function JobDetail() {
 
             <ConfirmModal 
                 isOpen={deleteModalOpen}
-                title="Delete Job"
-                message="Delete this job and its artifacts? This cannot be undone."
+                title={JOB_DETAIL_TEXTS.DELETE_MODAL_TITLE}
+                message={JOB_DETAIL_TEXTS.DELETE_MODAL_MSG}
                 onConfirm={handleDelete}
                 onCancel={() => setDeleteModalOpen(false)}
             />
             <ConfirmModal 
                 isOpen={cancelModalOpen}
-                title="Cancel Job"
-                message="Cancel this job?"
+                title={JOB_DETAIL_TEXTS.CANCEL_MODAL_TITLE}
+                message={JOB_DETAIL_TEXTS.CANCEL_MODAL_MSG}
                 onConfirm={handleCancel}
                 onCancel={() => setCancelModalOpen(false)}
             />
@@ -242,10 +244,10 @@ interface ResultsTableProps {
 
 function ResultsTable({ results, isTerminal }: ResultsTableProps) {
     if (!isTerminal) {
-        return <div className="text-sm text-neutral-400 py-8 text-center">Results will appear once the job finishes.</div>;
+        return <div className="text-sm text-neutral-400 py-8 text-center">{JOB_DETAIL_TEXTS.RESULTS_PENDING}</div>;
     }
     if (!results || results.length === 0) {
-        return <div className="text-sm text-neutral-400 py-8 text-center">No results produced.</div>;
+        return <div className="text-sm text-neutral-400 py-8 text-center">{JOB_DETAIL_TEXTS.RESULTS_EMPTY}</div>;
     }
     return (
         <table className="w-full text-sm">
@@ -273,7 +275,7 @@ interface ErrorsTableProps {
 
 function ErrorsTable({ errors }: ErrorsTableProps) {
     if (!errors || errors.length === 0) {
-        return <div className="text-sm text-neutral-400 py-8 text-center">No errors reported.</div>;
+        return <div className="text-sm text-neutral-400 py-8 text-center">{JOB_DETAIL_TEXTS.ERRORS_EMPTY}</div>;
     }
     return (
         <div className="space-y-2">

@@ -6,6 +6,8 @@ import type { Job } from '../types/job';
 import StatusBadge from '../components/StatusBadge';
 import AppButton from '../components/AppButton';
 import ConfirmModal from '../components/ConfirmModal';
+import { ROUTES, COMMON_LABELS } from '../constants/common';
+import { JOB_LIST_TEXTS } from '../constants/jobList';
 
 export default function JobList() {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -23,7 +25,7 @@ export default function JobList() {
       setLastFetched(new Date());
       setError(null);
     } catch {
-      setError('Failed to load jobs — is the backend running on :8081?');
+      setError(JOB_LIST_TEXTS.FETCH_ERROR);
     } finally {
       setLoading(false);
     }
@@ -49,17 +51,17 @@ export default function JobList() {
     }
   }
 
-  if (loading) return <div className="p-8 text-neutral-500">Loading jobs…</div>;
+  if (loading) return <div className="p-8 text-neutral-500">{JOB_LIST_TEXTS.LOADING_JOBS}</div>;
   if (error) return <div className="p-8 text-danger-600">{error}</div>;
 
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-neutral-900">Pipeline Jobs</h1>
+          <h1 className="text-2xl font-semibold text-neutral-900">{JOB_LIST_TEXTS.TITLE}</h1>
           {lastFetched && (
             <div className="text-xs text-neutral-500 mt-1">
-              Last fetched: {lastFetched.toLocaleTimeString()}
+              {JOB_LIST_TEXTS.LAST_FETCHED}{lastFetched.toLocaleTimeString()}
             </div>
           )}
         </div>
@@ -69,26 +71,26 @@ export default function JobList() {
             onClick={loadJobs} 
             disabled={loading}
             className="!p-2"
-            title="Refresh Jobs"
+            title={COMMON_LABELS.REFRESH}
           >
             <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
           </AppButton>
-          <Link to="/create" className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors inline-flex items-center justify-center">
-            + New Job
+          <Link to={ROUTES.CREATE_JOB} className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors inline-flex items-center justify-center">
+            {JOB_LIST_TEXTS.NEW_JOB}
           </Link>
         </div>
       </div>
 
       {jobs.length === 0 ? (
         <div className="text-center py-16 text-neutral-400 border-2 border-dashed rounded-xl">
-          No jobs yet — create one to get started.
+          {JOB_LIST_TEXTS.NO_JOBS}
         </div>
       ) : (
         <div className="space-y-3">
           {jobs.map((job) => (
             <Link
               key={job.id}
-              to={`/jobs/${job.id}`}
+              to={ROUTES.jobDetail(job.id)}
               className="block bg-white border border-neutral-200 rounded-xl p-4 hover:border-brand-300 hover:shadow-sm transition-all"
             >
               <div className="flex items-center justify-between">
@@ -97,12 +99,12 @@ export default function JobList() {
                   <StatusBadge status={job.status} />
                 </div>
                 <button onClick={(e) => promptDelete(job.id, e)} className="text-xs text-neutral-400 hover:text-danger-600 transition-colors">
-                  Delete
+                  {COMMON_LABELS.DELETE}
                 </button>
               </div>
               <div className="mt-2 flex gap-6 text-sm text-neutral-500">
-                <span>{job.processed_records} processed</span>
-                <span>{job.error_count} errors</span>
+                <span>{job.processed_records} {JOB_LIST_TEXTS.PROCESSED}</span>
+                <span>{job.error_count} {JOB_LIST_TEXTS.ERRORS}</span>
                 <span>{new Date(job.created_at).toLocaleString()}</span>
               </div>
             </Link>
@@ -112,8 +114,8 @@ export default function JobList() {
 
       <ConfirmModal 
         isOpen={deleteJobId !== null}
-        title="Delete Job"
-        message={`Delete job #${deleteJobId}? This removes its results and errors too.`}
+        title={JOB_LIST_TEXTS.DELETE_MODAL_TITLE}
+        message={deleteJobId ? JOB_LIST_TEXTS.deleteModalMessage(deleteJobId) : ''}
         onConfirm={handleDelete}
         onCancel={() => setDeleteJobId(null)}
       />

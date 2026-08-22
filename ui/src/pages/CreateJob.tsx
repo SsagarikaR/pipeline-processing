@@ -7,6 +7,8 @@ import TransformInput from '../components/TransformInput';
 import AggregationInput from '../components/AggregationInput';
 import ExportInput from '../components/ExportInput';
 import AppButton from '../components/AppButton';
+import { ROUTES, COMMON_LABELS } from '../constants/common';
+import { CREATE_JOB_TEXTS } from '../constants/createJob';
 
 const EMPTY_SPEC: JobSpec = {
   sources: [{ type: 'csv', path: '' }],
@@ -36,9 +38,9 @@ export default function CreateJob() {
         })),
       };
       const job = await api.createJob(cleanSpec);
-      navigate(`/jobs/${job.id}`);
+      navigate(ROUTES.jobDetail(job.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create job');
+      setError(err instanceof Error ? err.message : CREATE_JOB_TEXTS.CREATE_ERROR);
     } finally {
       setSubmitting(false);
     }
@@ -47,11 +49,11 @@ export default function CreateJob() {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <div className="mb-4">
-        <Link to="/" className="text-sm text-brand-600 hover:underline flex items-center gap-1">
-          <span>←</span> Back to Jobs
+        <Link to={ROUTES.HOME} className="text-sm text-brand-600 hover:underline flex items-center gap-1">
+          <span>←</span> {COMMON_LABELS.BACK_TO_JOBS.replace('← ', '')}
         </Link>
       </div>
-      <h1 className="text-2xl font-semibold text-neutral-900 mb-6">New Pipeline Job</h1>
+      <h1 className="text-2xl font-semibold text-neutral-900 mb-6">{CREATE_JOB_TEXTS.TITLE}</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6 bg-white border border-neutral-200 rounded-xl p-6">
         <SourceInput sources={spec.sources} onChange={(sources) => setSpec({ ...spec, sources })} />
@@ -63,10 +65,10 @@ export default function CreateJob() {
         <ExportInput exports={spec.exports} onChange={(exports) => setSpec({ ...spec, exports })} />
 
         <div>
-          <label className="block text-sm font-medium text-neutral-700 mb-2">Concurrency</label>
+          <label className="block text-sm font-medium text-neutral-700 mb-2">{CREATE_JOB_TEXTS.CONCURRENCY_LABEL}</label>
           <div className="flex gap-4">
             <div>
-              <span className="text-xs text-neutral-500">Validate workers</span>
+              <span className="text-xs text-neutral-500">{CREATE_JOB_TEXTS.VALIDATE_WORKERS}</span>
               <input
                 type="number"
                 min={1}
@@ -81,7 +83,7 @@ export default function CreateJob() {
               />
             </div>
             <div>
-              <span className="text-xs text-neutral-500">Transform workers</span>
+              <span className="text-xs text-neutral-500">{CREATE_JOB_TEXTS.TRANSFORM_WORKERS}</span>
               <input
                 type="number"
                 min={1}
@@ -108,7 +110,7 @@ export default function CreateJob() {
           className="w-full"
           size="lg"
         >
-          {submitting ? 'Creating…' : 'Create Job'}
+          {submitting ? CREATE_JOB_TEXTS.BTN_CREATING : CREATE_JOB_TEXTS.BTN_CREATE}
         </AppButton>
       </form>
     </div>

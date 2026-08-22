@@ -4,6 +4,7 @@ import CreateJob from './pages/CreateJob';
 import JobDetail from './pages/JobDetail';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Toaster } from 'react-hot-toast';
+import { ROUTES } from './constants/common';
 
 export default function App() {
   return (
@@ -11,9 +12,9 @@ export default function App() {
       <BrowserRouter>
         <div className="min-h-screen bg-neutral-50">
           <Routes>
-            <Route path="/" element={<JobList />} />
-            <Route path="/create" element={<CreateJob />} />
-            <Route path="/jobs/:id" element={<JobDetail />} />
+            <Route path={ROUTES.HOME} element={<JobList />} />
+            <Route path={ROUTES.CREATE_JOB} element={<CreateJob />} />
+            <Route path={ROUTES.JOB_DETAIL} element={<JobDetail />} />
           </Routes>
         </div>
         <Toaster position="top-right" />
