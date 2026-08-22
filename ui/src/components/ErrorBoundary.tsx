@@ -1,20 +1,14 @@
 import  { Component, ErrorInfo, ReactNode } from 'react';
 import toast from 'react-hot-toast';
 
-interface Props {
-  children: ReactNode;
-}
+import { ErrorBoundaryProps, ErrorBoundaryState } from '../types/common';
 
-interface State {
-  hasError: boolean;
-}
-
-class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  public state: ErrorBoundaryState = {
     hasError: false
   };
 
-  public static getDerivedStateFromError(_: Error): State {
+  public static getDerivedStateFromError(_: Error): ErrorBoundaryState {
     return { hasError: true };
   }
 

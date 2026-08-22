@@ -1,9 +1,6 @@
 import type { SourceConfig, SourceType } from '../types/job';
 
-interface SourceInputProps {
-  sources: SourceConfig[];
-  onChange: (sources: SourceConfig[]) => void;
-}
+import { SourceInputProps } from '../types/job';
 
 export default function SourceInput({ sources, onChange }: SourceInputProps) {
   function update(i: number, field: keyof SourceConfig, value: string) {

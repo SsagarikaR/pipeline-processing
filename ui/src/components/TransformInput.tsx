@@ -1,10 +1,6 @@
-// src/components/TransformInput.tsx
-import type { TransformConfig, TransformName } from '../types/job';
+import type { TransformName } from '../types/job';
 
-interface TransformInputProps {
-  transforms: TransformConfig[];
-  onChange: (transforms: TransformConfig[]) => void;
-}
+import { TransformInputProps } from '../types/job';
 
 export default function TransformInput({ transforms, onChange }: TransformInputProps) {
   function updateName(i: number, name: TransformName) {

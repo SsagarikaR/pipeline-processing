@@ -1,11 +1,8 @@
 import { ExportConfig } from '../types/job';
 
-interface Props {
-  exports: ExportConfig[];
-  onChange: (exps: ExportConfig[]) => void;
-}
+import { ExportInputProps } from '../types/job';
 
-export default function ExportInput({ exports, onChange }: Props) {
+export default function ExportInput({ exports, onChange }: ExportInputProps) {
   function update(i: number, fields: Partial<ExportConfig>) {
     const next = [...exports];
     next[i] = { ...next[i], ...fields };

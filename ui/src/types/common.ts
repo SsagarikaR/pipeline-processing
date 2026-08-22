@@ -17,3 +17,11 @@ export interface ConfirmModalProps {
 export interface StatusBadgeProps {
   status: JobStatus;
 }
+
+export interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+export interface ErrorBoundaryState {
+  hasError: boolean;
+}

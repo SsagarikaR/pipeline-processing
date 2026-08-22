@@ -87,3 +87,23 @@ export interface JobSpec {
   exports: ExportConfig[];
   concurrency: ConcurrencyConfig;
 }
+
+export interface SourceInputProps {
+  sources: SourceConfig[];
+  onChange: (sources: SourceConfig[]) => void;
+}
+
+export interface TransformInputProps {
+  transforms: TransformConfig[];
+  onChange: (transforms: TransformConfig[]) => void;
+}
+
+export interface AggregationInputProps {
+  aggregations: AggregationConfig[];
+  onChange: (aggs: AggregationConfig[]) => void;
+}
+
+export interface ExportInputProps {
+  exports: ExportConfig[];
+  onChange: (exps: ExportConfig[]) => void;
+}

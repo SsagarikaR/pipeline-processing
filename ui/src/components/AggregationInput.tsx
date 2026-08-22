@@ -1,9 +1,6 @@
 import { AggregationConfig } from '../types/job';
 
-interface Props {
-  aggregations: AggregationConfig[];
-  onChange: (aggs: AggregationConfig[]) => void;
-}
+import { AggregationInputProps } from '../types/job';
 
 const FIELD_TYPES = ['Number', 'String', 'Boolean', 'Date'];
 
@@ -14,7 +11,7 @@ const AGG_OPS: Record<string, string[]> = {
   Date: ['min', 'max', 'count'],
 };
 
-export default function AggregationInput({ aggregations, onChange }: Props) {
+export default function AggregationInput({ aggregations, onChange }: AggregationInputProps) {
   function update(i: number, field: keyof AggregationConfig | 'type', value: string) {
     const next: any[] = [...aggregations];
     

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { jobService as api } from '../service/jobService';
 import type { JobSpec } from '../types/job';
 import SourceInput from '../components/SourceInput';
@@ -46,6 +46,11 @@ export default function CreateJob() {
 
   return (
     <div className="max-w-2xl mx-auto p-6">
+      <div className="mb-4">
+        <Link to="/" className="text-sm text-brand-600 hover:underline flex items-center gap-1">
+          <span>←</span> Back to Jobs
+        </Link>
+      </div>
       <h1 className="text-2xl font-semibold text-neutral-900 mb-6">New Pipeline Job</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6 bg-white border border-neutral-200 rounded-xl p-6">
