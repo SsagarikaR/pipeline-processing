@@ -14,6 +14,10 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
+func init() {
+	SandboxDir = ""
+}
+
 func TestEngineRun_Success(t *testing.T) {
 	// Create a temporary JSON file to ingest
 	tmpDir := t.TempDir()
