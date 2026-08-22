@@ -10,8 +10,10 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 )
 
 type csvIngester struct{}
@@ -106,6 +108,8 @@ func (jsonIngester) Ingest(ctx context.Context, cfg SourceConfig, out chan<- Rec
 	return nil
 }
 
+var SandboxDir = "/data/inputs"
+
 func openSource(path string) (io.Reader, func(), error) {
 	if strings.HasPrefix(path, "data:") {
 		parts := strings.SplitN(path, ",", 2)
@@ -122,13 +126,33 @@ func openSource(path string) (io.Reader, func(), error) {
 		return r, func() {}, nil
 	}
 	if strings.HasPrefix(path, "http") {
-		resp, err := http.Get(path)
+		var resp *http.Response
+		var err error
+		// Implement retry logic with exponential backoff for network resilience
+		for i := 0; i < 3; i++ {
+			resp, err = http.Get(path)
+			if err == nil && resp.StatusCode == 200 {
+				break
+			}
+			time.Sleep(time.Duration(1<<i) * time.Second)
+		}
 		if err != nil {
 			return nil, nil, fmt.Errorf("fetch %s: %w", path, err)
 		}
+		if resp.StatusCode != 200 {
+			return nil, nil, fmt.Errorf("fetch %s: bad status %d", path, resp.StatusCode)
+		}
 		return resp.Body, func() { resp.Body.Close() }, nil
 	}
-	f, err := os.Open(path)
+	// Path traversal protection: Clean path and enforce sandbox
+	if strings.Contains(path, "..") {
+		return nil, nil, fmt.Errorf("open %s: path traversal detected", path)
+	}
+	cleaned := filepath.Clean(path)
+	if SandboxDir != "" && !strings.HasPrefix(cleaned, SandboxDir) {
+		return nil, nil, fmt.Errorf("open %s: path outside allowed sandbox %s", path, SandboxDir)
+	}
+	f, err := os.Open(cleaned)
 	if err != nil {
 		return nil, nil, fmt.Errorf("open %s: %w", path, err)
 	}
