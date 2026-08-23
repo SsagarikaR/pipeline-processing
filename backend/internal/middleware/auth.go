@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"crypto/subtle"
 	"net/http"
 	"os"
 )
@@ -22,8 +23,10 @@ func APIKeyMiddleware(next http.Handler) http.Handler {
 			expectedKey = "secret-pipeline-key"
 		}
 
+		// Constant-time comparison so a mismatch can't be timed to guess
+		// the key one byte at a time.
 		key := r.Header.Get("X-API-Key")
-		if key != expectedKey {
+		if subtle.ConstantTimeCompare([]byte(key), []byte(expectedKey)) != 1 {
 			http.Error(w, "401 Unauthorized - Invalid or missing API Key", http.StatusUnauthorized)
 			return
 		}
