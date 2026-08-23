@@ -34,9 +34,10 @@ export default function ExportInput() {
             />
             <AppButton
               type="button"
+              variant="ghost"
               onClick={() => remove(i)}
               aria-label={CREATE_JOB_TEXTS.REMOVE_EXPORT_ARIA}
-              className="px-3 text-neutral-400 hover:text-danger-600"
+              className="text-neutral-400! hover:text-danger-600!"
             >
               {COMMON_LABELS.REMOVE}
             </AppButton>
@@ -49,8 +50,9 @@ export default function ExportInput() {
       {errors.exports?.message && <p className="text-xs text-danger-600">{errors.exports.message}</p>}
       <AppButton
         type="button"
+        variant="ghost"
         onClick={() => append({ type: 's3', path: '' })}
-        className="text-sm text-brand-600 hover:text-brand-700 font-medium"
+        className="text-brand-600! hover:text-brand-700! hover:bg-transparent!"
       >
         {CREATE_JOB_TEXTS.ADD_EXPORT}
       </AppButton>

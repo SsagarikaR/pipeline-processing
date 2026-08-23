@@ -91,9 +91,10 @@ export default function AggregationInput() {
               />
               <AppButton
                 type="button"
+                variant="ghost"
                 onClick={() => remove(i)}
                 aria-label={CREATE_JOB_TEXTS.REMOVE_AGGREGATION_ARIA}
-                className="px-3 text-neutral-400 hover:text-danger-600"
+                className="text-neutral-400! hover:text-danger-600!"
               >
                 {COMMON_LABELS.REMOVE}
               </AppButton>
@@ -105,8 +106,9 @@ export default function AggregationInput() {
       {errors.aggregations?.message && <p className="text-xs text-danger-600">{errors.aggregations.message}</p>}
       <AppButton
         type="button"
+        variant="ghost"
         onClick={() => append({ field: '', op: 'sum', groupBy: '' })}
-        className="text-sm text-brand-600 hover:text-brand-700 font-medium"
+        className="text-brand-600! hover:text-brand-700! hover:bg-transparent!"
       >
         {CREATE_JOB_TEXTS.ADD_AGGREGATION}
       </AppButton>
