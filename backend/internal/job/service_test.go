@@ -77,6 +77,18 @@ func (m *mockJobStore) DeleteJobs(ctx context.Context, id int) error {
 	return nil
 }
 
+func (m *mockJobStore) RecoverStuckJobs(ctx context.Context) (int64, error) {
+	var n int64
+	for id, j := range m.Jobs {
+		if j.Status == pipeline.StatusPending || j.Status == pipeline.StatusRunning {
+			j.Status = pipeline.StatusFailed
+			m.Jobs[id] = j
+			n++
+		}
+	}
+	return n, nil
+}
+
 type mockResultStore struct {
 	Results map[int][]models.Result
 }
@@ -235,5 +247,28 @@ func TestJobService_GetErrors(t *testing.T) {
 	}
 	if len(errs) != 1 {
 		t.Errorf("expected 1 error, got %d", len(errs))
+	}
+}
+
+func TestJobService_RecoverStuckJobs(t *testing.T) {
+	js := &mockJobStore{Jobs: map[int]models.Job{
+		1: {ID: 1, Status: pipeline.StatusPending},
+		2: {ID: 2, Status: pipeline.StatusRunning},
+		3: {ID: 3, Status: pipeline.StatusCompleted},
+	}}
+	svc := NewJobService(js, nil, nil)
+
+	if err := svc.RecoverStuckJobs(context.Background()); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if js.Jobs[1].Status != pipeline.StatusFailed {
+		t.Errorf("expected pending job to be marked failed, got %s", js.Jobs[1].Status)
+	}
+	if js.Jobs[2].Status != pipeline.StatusFailed {
+		t.Errorf("expected running job to be marked failed, got %s", js.Jobs[2].Status)
+	}
+	if js.Jobs[3].Status != pipeline.StatusCompleted {
+		t.Errorf("expected completed job to be left alone, got %s", js.Jobs[3].Status)
 	}
 }

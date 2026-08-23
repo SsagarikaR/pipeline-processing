@@ -51,7 +51,7 @@ func run() error {
 		}
 	}()
 
-	srv := server.New(cfg, pool)
+	srv := server.New(ctx, cfg, pool)
 
 	go func() {
 		slog.Info("server listening", "addr", srv.Addr)

@@ -1,7 +1,9 @@
 package server
 
 import (
+	"context"
 	"database/sql"
+	"log/slog"
 	"net/http"
 
 	httpSwagger "github.com/swaggo/http-swagger/v2"
@@ -12,7 +14,7 @@ import (
 
 // mapRoutes builds the job dependencies (store, service, handler) and
 // registers every HTTP endpoint the API exposes, plus the swagger UI.
-func mapRoutes(pool *sql.DB) *http.ServeMux {
+func mapRoutes(ctx context.Context, pool *sql.DB) *http.ServeMux {
 	mux := http.NewServeMux()
 	p := func(path string) string {
 		return "/api/v1" + path
@@ -25,6 +27,12 @@ func mapRoutes(pool *sql.DB) *http.ServeMux {
 	resultStore := job.NewResultStore(pool)
 	errorStore := job.NewErrorStore(pool)
 	jobService := job.NewJobService(jobStore, resultStore, errorStore)
+
+	// Best-effort cleanup: don't block startup on it, but do log if it fails.
+	if err := jobService.RecoverStuckJobs(ctx); err != nil {
+		slog.Error("failed to recover stuck jobs", "err", err)
+	}
+
 	ph := job.NewPipelineHandler(jobService)
 
 	// Define Job Endpoints

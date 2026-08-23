@@ -170,3 +170,22 @@ func (s *postgresJobStore) UpdateExportURL(ctx context.Context, jobID int, url s
 	}
 	return nil
 }
+
+// RecoverStuckJobs marks every job still sitting in "pending" or
+// "running" as failed. Meant to be called once at server startup: if the
+// process crashed or was killed mid-run, those jobs have no goroutine
+// processing them anymore and would otherwise stay stuck in that status
+// forever. Returns how many jobs it recovered.
+func (s *postgresJobStore) RecoverStuckJobs(ctx context.Context) (int64, error) {
+	result, err := s.db.ExecContext(ctx,
+		`UPDATE jobs SET status = $1, completed_at = now() WHERE status IN ($2, $3)`,
+		pipeline.StatusFailed, pipeline.StatusPending, pipeline.StatusRunning)
+	if err != nil {
+		return 0, fmt.Errorf("store: recover stuck jobs: %w", err)
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("store: recover stuck jobs rows affected: %w", err)
+	}
+	return rows, nil
+}

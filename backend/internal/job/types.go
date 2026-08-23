@@ -17,6 +17,7 @@ type JobStore interface {
 	DeleteJobs(ctx context.Context, jobID int) error
 	UpdateStatusAndMetrics(ctx context.Context, jobID int, status string, processed int64, errors int64) error
 	UpdateExportURL(ctx context.Context, jobID int, url string) error
+	RecoverStuckJobs(ctx context.Context) (int64, error)
 }
 
 type postgresJobStore struct {

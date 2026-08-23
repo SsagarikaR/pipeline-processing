@@ -11,11 +11,12 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/middleware"
 )
 
-// New builds the HTTP server: it maps the routes, then wraps them with
+// New builds the HTTP server: it maps the routes (recovering any jobs
+// left stuck by a previous crash along the way), then wraps them with
 // the middleware chain (rate limiting, API key auth, CORS, security
 // headers, request logging), outermost middleware first.
-func New(cfg *config.Config, pool *sql.DB) *http.Server {
-	router := mapRoutes(pool)
+func New(ctx context.Context, cfg *config.Config, pool *sql.DB) *http.Server {
+	router := mapRoutes(ctx, pool)
 
 	// Create a rate limiter allowing 10 requests per second with a burst of 20
 	limiter := middleware.NewRateLimiter(10, 20)

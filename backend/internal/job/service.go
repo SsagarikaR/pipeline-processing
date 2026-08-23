@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 	"github.com/SsagarikaR/pipeline-processing/internal/pipeline"
@@ -170,4 +171,20 @@ func (s *JobService) GetResults(ctx context.Context, id int) ([]models.Result, e
 // GetErrors returns the records that failed processing for a job.
 func (s *JobService) GetErrors(ctx context.Context, id int) ([]models.JobError, error) {
 	return s.errorStore.GetErrorsByJob(ctx, id)
+}
+
+// RecoverStuckJobs marks any job left in "pending" or "running" as
+// failed. Call this once at server startup, before accepting traffic:
+// those statuses only make sense while a goroutine from a previous
+// process is actively driving the job, and after a crash/restart no
+// such goroutine exists anymore.
+func (s *JobService) RecoverStuckJobs(ctx context.Context) error {
+	n, err := s.store.RecoverStuckJobs(ctx)
+	if err != nil {
+		return fmt.Errorf("recover stuck jobs: %w", err)
+	}
+	if n > 0 {
+		slog.Warn("recovered jobs stuck from a previous run", "count", n)
+	}
+	return nil
 }
