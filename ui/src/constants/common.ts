@@ -19,7 +19,7 @@ export const ROUTES = {
 
 /** Short, reusable button/label text shared across pages. */
 export const COMMON_LABELS = {
-  BACK_TO_JOBS: '← Back to Jobs',
+  BACK_TO_JOBS: ' Back to Jobs',
   DELETE: 'Delete',
   CANCEL: 'Cancel',
   CONFIRM: 'Confirm',
