@@ -18,6 +18,9 @@ import (
 
 type csvIngester struct{}
 
+// Ingest reads a CSV file (or data URI/URL) row by row, turning each row
+// into a Record keyed by the header column names, and streams them out
+// on out until the source is exhausted or the context is cancelled.
 func (csvIngester) Ingest(ctx context.Context, cfg SourceConfig, out chan<- Record) error {
 	r, closeFn, err := openSource(cfg.Path)
 	if err != nil {
@@ -60,6 +63,10 @@ func (csvIngester) Ingest(ctx context.Context, cfg SourceConfig, out chan<- Reco
 
 type jsonIngester struct{}
 
+// Ingest reads a JSON source and streams each item out as a Record. It
+// accepts either a top-level array of objects, an object that contains
+// one array field (that array's items are used), or a single object
+// (treated as one record).
 func (jsonIngester) Ingest(ctx context.Context, cfg SourceConfig, out chan<- Record) error {
 	r, closeFn, err := openSource(cfg.Path)
 	if err != nil {
@@ -110,6 +117,11 @@ func (jsonIngester) Ingest(ctx context.Context, cfg SourceConfig, out chan<- Rec
 
 var SandboxDir = "/data/inputs"
 
+// openSource opens a source path for reading, however it's provided:
+// an inline "data:" URI, an "http(s)://" URL (retried a few times with
+// backoff), or a local file path restricted to SandboxDir to prevent
+// path-traversal reads outside the allowed directory. It returns a
+// reader plus a close function the caller must call when done.
 func openSource(path string) (io.Reader, func(), error) {
 	if strings.HasPrefix(path, "data:") {
 		parts := strings.SplitN(path, ",", 2)
@@ -159,12 +171,18 @@ func openSource(path string) (io.Reader, func(), error) {
 	return f, func() { f.Close() }, nil
 }
 
-func init() { //init is special function in go it automatically runs when the package loaded before anything else runs
+// init registers the built-in ingesters (csv, json, api) so they're
+// available as soon as the package is imported. Go runs init functions
+// automatically, before main starts.
+func init() {
 	RegisterIngester("csv", csvIngester{})
 	RegisterIngester("json", jsonIngester{})
 	RegisterIngester("api", jsonIngester{})
 }
 
+// runIngestion is the pipeline's ingest stage: it starts one goroutine
+// per configured source, each reading its own records into a shared
+// channel, and closes that channel once every source has finished.
 func runIngestion(ctx context.Context, jobID int, sources []SourceConfig, errCh chan<- ProcessError) <-chan Record {
 	recordsCh := make(chan Record, 100)
 	var wg sync.WaitGroup

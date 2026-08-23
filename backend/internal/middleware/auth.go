@@ -5,7 +5,9 @@ import (
 	"os"
 )
 
-// APIKeyMiddleware checks for a valid API Key in the X-API-Key header.
+// APIKeyMiddleware rejects any request that doesn't carry the correct
+// X-API-Key header, except requests to the Swagger UI which stay open
+// so the API docs are browsable without a key.
 func APIKeyMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Allow Swagger UI without auth

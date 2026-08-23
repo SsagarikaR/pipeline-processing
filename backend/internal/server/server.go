@@ -11,6 +11,9 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/middleware"
 )
 
+// New builds the HTTP server: it maps the routes, then wraps them with
+// the middleware chain (rate limiting, API key auth, CORS, security
+// headers, request logging), outermost middleware first.
 func New(cfg *config.Config, pool *sql.DB) *http.Server {
 	router := mapRoutes(pool)
 
@@ -32,6 +35,8 @@ func New(cfg *config.Config, pool *sql.DB) *http.Server {
 	}
 }
 
+// Shutdown gives the server up to 5 seconds to finish in-flight requests
+// before forcing it closed.
 func Shutdown(ctx context.Context, srv *http.Server) {
 	shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()

@@ -11,7 +11,8 @@ import (
 
 type correlationIDKey struct{}
 
-// generateCorrelationID creates a random 16-byte hex string
+// generateCorrelationID creates a random 16-byte hex string used to tie
+// together all the log lines for a single request.
 func generateCorrelationID() string {
 	b := make([]byte, 16)
 	if _, err := rand.Read(b); err != nil {
@@ -20,7 +21,11 @@ func generateCorrelationID() string {
 	return hex.EncodeToString(b)
 }
 
-// LoggingMiddleware logs incoming HTTP requests with correlation IDs
+// LoggingMiddleware logs every request as it comes in and again once it
+// finishes (with how long it took). It reuses the caller's
+// X-Correlation-ID header if one was sent, otherwise generates a new
+// one, and echoes it back in the response so callers can trace a
+// request end-to-end.
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()

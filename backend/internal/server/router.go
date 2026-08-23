@@ -10,6 +10,8 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/job"
 )
 
+// mapRoutes builds the job dependencies (store, service, handler) and
+// registers every HTTP endpoint the API exposes, plus the swagger UI.
 func mapRoutes(pool *sql.DB) *http.ServeMux {
 	mux := http.NewServeMux()
 	p := func(path string) string {

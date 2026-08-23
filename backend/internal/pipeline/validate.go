@@ -7,6 +7,7 @@ import (
 	"sync"
 )
 
+// defaultValidator rejects a record if it has no fields at all.
 func defaultValidator(r Record) error {
 	if len(r.Data) == 0 {
 		return fmt.Errorf("empty record")
@@ -14,6 +15,10 @@ func defaultValidator(r Record) error {
 	return nil
 }
 
+// runValidation is the pipeline's validate stage. A pool of worker
+// goroutines checks each record with defaultValidator; valid records
+// move on to the next stage, invalid ones are reported as errors (and
+// still counted toward progress) instead of being forwarded.
 func runValidation(ctx context.Context, jobID int, in <-chan Record, workers int, errCh chan<- ProcessError, progressCh chan<- struct{}) <-chan Record {
 	if workers < 1 {
 		workers = 1

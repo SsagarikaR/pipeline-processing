@@ -4,6 +4,9 @@ import (
 	"net/http"
 )
 
+// CorsMiddleware allows the given origin to call this API from a browser.
+// It sets the CORS headers on every response and short-circuits preflight
+// OPTIONS requests with a 200 instead of passing them to the next handler.
 func CorsMiddleware(origin string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

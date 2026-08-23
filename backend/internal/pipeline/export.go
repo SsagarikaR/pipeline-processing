@@ -16,6 +16,11 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
+// runExport is the pipeline's final stage. It waits for the aggregation
+// stage's single output, saves the results to the database, then runs
+// every configured exporter (e.g. writing to S3) and records the
+// resulting URL. The returned channel closes once all of that is done,
+// signalling the whole pipeline run is finished.
 func runExport(ctx context.Context, jobID int, in <-chan aggOutput, exports []ExportConfig, resultStore func(ctx context.Context, results []models.Result) error, storeURL func(ctx context.Context, url string) error, errCh chan<- ProcessError) <-chan struct{} {
 	doneCh := make(chan struct{})
 
@@ -71,6 +76,9 @@ func runExport(ctx context.Context, jobID int, in <-chan aggOutput, exports []Ex
 
 type s3Exporter struct{}
 
+// Export uploads a job's records and results as one JSON object to S3
+// (or an S3-compatible endpoint, for local dev via localstack) and
+// returns the object's URL.
 func (s3Exporter) Export(ctx context.Context, cfg ExportConfig, records []Record, results []models.Result) (string, error) {
 	appConfig := config.LoadConfig()
 	bucket := appConfig.S3.Bucket
@@ -112,6 +120,8 @@ func (s3Exporter) Export(ctx context.Context, cfg ExportConfig, records []Record
 	return url, nil
 }
 
+// init registers the built-in s3 exporter so it's available as soon as
+// the package is imported.
 func init() {
 	RegisterExporter("s3", s3Exporter{})
 }

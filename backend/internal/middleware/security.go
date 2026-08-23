@@ -2,7 +2,9 @@ package middleware
 
 import "net/http"
 
-// SecurityHeadersMiddleware adds standard security headers to HTTP responses
+// SecurityHeadersMiddleware adds standard security headers (no-sniff,
+// clickjacking protection, HSTS, a basic CSP) to every response, so each
+// handler doesn't have to set them individually.
 func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")

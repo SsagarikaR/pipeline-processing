@@ -13,6 +13,8 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/pipeline"
 )
 
+// NewPipelineHandler wires a JobService into an HTTP handler for the
+// pipeline endpoints (create, list, progress, cancel, delete, etc).
 func NewPipelineHandler(service *JobService) *pipelineHandler {
 	return &pipelineHandler{service: service}
 }
@@ -276,6 +278,8 @@ func (h *pipelineHandler) GetErrors(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(errs)
 }
 
+// parseID reads the "id" path value from the request and converts it to
+// an int, returning an error if it's missing or not a valid number.
 func parseID(r *http.Request) (int, error) {
 	idStr := r.PathValue("id")
 	if idStr == "" {
