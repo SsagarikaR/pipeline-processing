@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { jobService as api } from '../service/jobService';
 import type { Result, JobError } from '../types/job';
-import { RefreshCw } from 'lucide-react';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
 import StatusBadge from '../components/common/StatusBadge';
 import usePolling from '../hooks/usePolling';
 import AppButton from '../components/common/AppButton';
@@ -142,7 +142,7 @@ export default function JobDetail() {
         <div className="max-w-3xl mx-auto p-6">
             <div className="mb-4">
                 <Link to={ROUTES.HOME} className="text-sm text-brand-600 hover:underline flex items-center gap-1">
-                    <span>←</span> {COMMON_LABELS.BACK_TO_JOBS.replace('← ', '')}
+                    <span><ArrowLeft size={16} /></span> {COMMON_LABELS.BACK_TO_JOBS.replace('← ', '')}
                 </Link>
             </div>
             <div className="flex items-center justify-between mb-6">
