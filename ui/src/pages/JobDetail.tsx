@@ -12,6 +12,11 @@ import { JOB_DETAIL_TEXTS } from '../constants/jobDetail';
 
 const TERMINAL_STATUSES = ['completed', 'failed', 'cancelled'] as const;
 
+/**
+ * Detail page for a single job: live progress (polled every 15
+ * minutes, or on demand), tabs for results/errors once the job
+ * finishes, an export-file preview, and cancel/delete actions.
+ */
 export default function JobDetail() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -31,6 +36,10 @@ export default function JobDetail() {
         return <div className="p-8 text-danger-600">{JOB_DETAIL_TEXTS.INVALID_ID}</div>;
     }
 
+    /**
+     * Fetches an exported file and shows it in the preview panel,
+     * pretty-printing it first if it turns out to be JSON.
+     */
     async function handlePreview(e: React.MouseEvent, url: string) {
         e.preventDefault();
         setPreviewLoading(true);
@@ -52,17 +61,20 @@ export default function JobDetail() {
         }
     }
 
+    // Polled by usePolling below to keep progress live while the job runs.
     const fetchProgress = useCallback(() => api.getProgress(id), [id]);
     const { data: progress, error: progressError, refresh: refreshProgress } = usePolling(fetchProgress, 15 * 60 * 1000, true);
 
     const isTerminal = progress ? (TERMINAL_STATUSES as readonly string[]).includes(progress.status) : false;
 
+    /** Loads results once the job has actually finished - there's nothing to show before then. */
     const fetchResults = useCallback(() => {
         if (isTerminal) {
             api.getResults(id).then(res => setResults(res || [])).catch(() => { });
         }
     }, [isTerminal, id]);
 
+    /** Loads the errors tab's data; errors can appear while the job is still running. */
     const fetchErrors = useCallback(() => {
         api.getErrors(id).then(errs => setErrors(errs || [])).catch(() => { });
     }, [id]);
@@ -77,12 +89,14 @@ export default function JobDetail() {
         return () => clearInterval(interval);
     }, [fetchErrors]);
 
+    /** Refreshes progress, results, and errors all at once (the refresh icon button). */
     async function handleManualRefresh() {
         await refreshProgress();
         fetchResults();
         fetchErrors();
     }
 
+    /** Cancels the job the confirmation modal is open for. */
     async function handleCancel() {
         if (id) {
             await api.cancelJob(id);
@@ -90,6 +104,7 @@ export default function JobDetail() {
         }
     }
 
+    /** Deletes the job the confirmation modal is open for and returns to the job list. */
     async function handleDelete() {
         if (id) {
             await api.deleteJob(id);
@@ -227,6 +242,7 @@ interface MetricCardProps {
     tone?: 'default' | 'red';
 }
 
+/** One stat tile in the progress header (e.g. "Processed: 1,204"). */
 function MetricCard({ label, value, tone = 'default' }: MetricCardProps) {
     const toneClass = tone === 'red' ? 'text-danger-600' : 'text-neutral-900';
     return (
@@ -242,6 +258,10 @@ interface ResultsTableProps {
     isTerminal: boolean;
 }
 
+/**
+ * The "Results" tab: a table of aggregated values, or an explanatory
+ * placeholder if the job hasn't finished yet or produced nothing.
+ */
 function ResultsTable({ results, isTerminal }: ResultsTableProps) {
     if (!isTerminal) {
         return <div className="text-sm text-neutral-400 py-8 text-center">{JOB_DETAIL_TEXTS.RESULTS_PENDING}</div>;
@@ -273,6 +293,7 @@ interface ErrorsTableProps {
     errors: JobError[];
 }
 
+/** The "Errors" tab: a list of records that failed processing, with the stage and reason. */
 function ErrorsTable({ errors }: ErrorsTableProps) {
     if (!errors || errors.length === 0) {
         return <div className="text-sm text-neutral-400 py-8 text-center">{JOB_DETAIL_TEXTS.ERRORS_EMPTY}</div>;

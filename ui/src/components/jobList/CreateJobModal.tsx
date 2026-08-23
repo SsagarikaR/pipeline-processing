@@ -23,6 +23,15 @@ const EMPTY_SPEC: JobSpecFormValues = {
   concurrency: { validateWorkers: 4, transformWorkers: 4 },
 };
 
+/**
+ * The "New Pipeline Job" form, shown as a modal over the job list. Owns
+ * the whole form's state via react-hook-form (validated against
+ * jobSpecSchema) and shares it with the SourceInput/TransformInput/
+ * AggregationInput/ExportInput sections through FormProvider, so they
+ * can each register their own fields without prop drilling. On a
+ * successful submit it closes itself and navigates to the new job's
+ * detail page.
+ */
 export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -40,12 +49,18 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
 
   if (!isOpen) return null;
 
+  /** Resets the form back to empty and closes the modal (Cancel/X button). */
   function handleClose() {
     reset(EMPTY_SPEC);
     setSubmitError(null);
     onClose();
   }
 
+  /**
+   * Runs once react-hook-form has confirmed every field is valid. Strips
+   * the empty `groupBy` from aggregations before sending, then posts the
+   * job and either navigates to it or shows the backend's error inline.
+   */
   const onSubmit = handleSubmit(async (spec) => {
     setSubmitError(null);
     try {

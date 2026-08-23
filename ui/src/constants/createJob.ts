@@ -1,7 +1,9 @@
 import type { AggregationOp } from '../types/job';
 
+/** The coarse field types AggregationInput's type dropdown offers. */
 export const AGGREGATION_FIELD_TYPES = ['Number', 'String', 'Boolean', 'Date'] as const;
 
+/** Which aggregation operations make sense for each field type. */
 export const AGGREGATION_OPS_BY_FIELD_TYPE: Record<string, AggregationOp[]> = {
   Number: ['sum', 'avg', 'min', 'max', 'count'],
   String: ['count'],
@@ -9,6 +11,7 @@ export const AGGREGATION_OPS_BY_FIELD_TYPE: Record<string, AggregationOp[]> = {
   Date: ['min', 'max', 'count'],
 };
 
+/** Copy used throughout the create-job form and its field-array sections. */
 export const CREATE_JOB_TEXTS = {
   TITLE: 'New Pipeline Job',
   CLOSE_LABEL: 'Close',

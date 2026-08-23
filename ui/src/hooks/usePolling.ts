@@ -18,6 +18,7 @@ export default function usePolling<T>(
   const [error, setError] = useState<Error | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  /** Manually re-fetches once, outside the regular interval (e.g. a refresh button). */
   async function refresh() {
     try {
       const result = await fetchFn();

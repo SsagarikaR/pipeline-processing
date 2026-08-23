@@ -2,7 +2,13 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import type { JobSpecFormValues } from '../../schemas/jobSpec';
 import { COMMON_LABELS } from '../../constants/common';
 import { CREATE_JOB_TEXTS } from '../../constants/createJob';
+import AppButton from '../common/AppButton';
 
+/**
+ * The "Exports" section of the create-job form: a required, repeatable
+ * list of output file names. The storage backend is fixed to S3
+ * internally - the user only ever names the file.
+ */
 export default function ExportInput() {
   const {
     register,
@@ -24,9 +30,13 @@ export default function ExportInput() {
               {...register(`exports.${i}.path`)}
               className="flex-1 border border-neutral-300 rounded-lg px-3 py-2 text-sm"
             />
-            <button type="button" onClick={() => remove(i)} className="px-3 text-neutral-400 hover:text-danger-600">
+            <AppButton
+              type="button"
+              onClick={() => remove(i)}
+              className="px-3 text-neutral-400 hover:text-danger-600"
+            >
               {COMMON_LABELS.REMOVE}
-            </button>
+            </AppButton>
           </div>
           {errors.exports?.[i]?.path && (
             <p className="text-xs text-danger-600 mt-1">{errors.exports[i]?.path?.message}</p>
@@ -34,13 +44,13 @@ export default function ExportInput() {
         </div>
       ))}
       {errors.exports?.message && <p className="text-xs text-danger-600">{errors.exports.message}</p>}
-      <button
+      <AppButton
         type="button"
         onClick={() => append({ type: 's3', path: '' })}
         className="text-sm text-brand-600 hover:text-brand-700 font-medium"
       >
         {CREATE_JOB_TEXTS.ADD_EXPORT}
-      </button>
+      </AppButton>
     </div>
   );
 }

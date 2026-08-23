@@ -1,5 +1,11 @@
 import { AppButtonProps } from '../../types/common';
 
+/**
+ * Standard button used everywhere in the app instead of a bare
+ * `<button>`, so every button shares the same set of visual variants
+ * (primary/secondary/danger/ghost) and sizes. Any extra props (onClick,
+ * type, disabled, etc.) pass straight through to the underlying button.
+ */
 export default function AppButton({ variant = 'primary', size = 'md', className = '', children, ...props }: AppButtonProps) {
   const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
   

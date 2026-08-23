@@ -3,6 +3,11 @@ import AppButton from './AppButton';
 import { ConfirmModalProps } from '../../types/common';
 import { COMMON_LABELS } from '../../constants/common';
 
+/**
+ * Generic yes/no confirmation dialog, reused for anything that needs a
+ * "are you sure?" step before acting (deleting or cancelling a job).
+ * Renders nothing while closed.
+ */
 export default function ConfirmModal({ isOpen, title, message, onConfirm, onCancel }: ConfirmModalProps) {
   if (!isOpen) return null;
 

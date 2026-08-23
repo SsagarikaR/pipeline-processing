@@ -1,3 +1,4 @@
+/** Copy used on the job detail page. */
 export const JOB_DETAIL_TEXTS = {
   JOB_TITLE_PREFIX: 'Job #',
   REFRESH_TITLE: 'Refresh Job Data',
@@ -13,9 +14,12 @@ export const JOB_DETAIL_TEXTS = {
   COMPLETED: 'Completed: ',
   EXPORT: 'Export: ',
   TAB_PROGRESS: 'Live Progress',
+  /** Results tab label with its current count, e.g. "Results (3)". */
   tabResults: (count: number) => `Results (${count})`,
+  /** Errors tab label with its current count, e.g. "Errors (1)". */
   tabErrors: (count: number) => `Errors (${count})`,
   RUNNING_MSG: 'Job is running — this page auto-refreshes every 2 seconds.',
+  /** Summary line shown once a job reaches a terminal status. */
   finishedMsg: (status: string) => `Job finished with status "${status}".`,
   RESULTS_EMPTY: 'No results produced.',
   RESULTS_PENDING: 'Results will appear once the job finishes.',

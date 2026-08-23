@@ -4,6 +4,13 @@ import type { JobSpecFormValues } from '../../schemas/jobSpec';
 import { COMMON_LABELS } from '../../constants/common';
 import { CREATE_JOB_TEXTS, AGGREGATION_FIELD_TYPES, AGGREGATION_OPS_BY_FIELD_TYPE } from '../../constants/createJob';
 
+/**
+ * The "Aggregations" section of the create-job form: a required,
+ * repeatable list of aggregations (e.g. sum of "amount" grouped by
+ * "region"). The field-type dropdown is a local-only convenience that
+ * narrows which operations are offered - it isn't part of the submitted
+ * job spec.
+ */
 export default function AggregationInput() {
   const {
     register,
@@ -18,6 +25,11 @@ export default function AggregationInput() {
   const [typeByFieldId, setTypeByFieldId] = useState<Record<string, string>>({});
   const currentOps = watch('aggregations');
 
+  /**
+   * Switches which field type a row is grouped under, and if the
+   * currently selected operation isn't valid for the new type, resets
+   * it to the first valid one instead of leaving a stale value.
+   */
   function handleTypeChange(fieldId: string, index: number, type: string) {
     setTypeByFieldId((prev) => ({ ...prev, [fieldId]: type }));
     const availableOps = AGGREGATION_OPS_BY_FIELD_TYPE[type] ?? [];

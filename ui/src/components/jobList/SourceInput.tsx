@@ -2,7 +2,14 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import type { JobSpecFormValues } from '../../schemas/jobSpec';
 import { COMMON_LABELS } from '../../constants/common';
 import { CREATE_JOB_TEXTS } from '../../constants/createJob';
+import AppButton from '../common/AppButton';
 
+/**
+ * The "Sources" section of the create-job form: a repeatable list of
+ * input files (CSV or JSON), each with a type, a path, and a file
+ * upload shortcut that fills the path in for you. Reads and writes
+ * directly into the shared CreateJobModal form via useFormContext.
+ */
 export default function SourceInput() {
   const {
     register,
@@ -14,6 +21,7 @@ export default function SourceInput() {
   const { fields, append, remove } = useFieldArray({ control, name: 'sources' });
   const types = watch('sources');
 
+  /** Reads a chosen file and fills the row's path with it as a data URI. */
   function handleUpload(index: number, file: File) {
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -63,9 +71,13 @@ export default function SourceInput() {
                 />
               </label>
             </div>
-            <button type="button" onClick={() => remove(i)} className="px-3 text-neutral-400 hover:text-danger-600">
+            <AppButton
+              type="button"
+              onClick={() => remove(i)}
+              className="px-3 text-neutral-400 hover:text-danger-600"
+            >
               {COMMON_LABELS.REMOVE}
-            </button>
+            </AppButton>
           </div>
           {errors.sources?.[i]?.path && (
             <p className="text-xs text-danger-600 mt-1">{errors.sources[i]?.path?.message}</p>
@@ -73,13 +85,13 @@ export default function SourceInput() {
         </div>
       ))}
       {errors.sources?.message && <p className="text-xs text-danger-600">{errors.sources.message}</p>}
-      <button
+      <AppButton
         type="button"
         onClick={() => append({ type: 'csv', path: '' })}
         className="text-sm text-brand-600 hover:text-brand-700 font-medium"
       >
         {CREATE_JOB_TEXTS.ADD_SOURCE}
-      </button>
+      </AppButton>
     </div>
   );
 }

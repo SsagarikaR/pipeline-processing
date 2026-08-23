@@ -2,7 +2,13 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import type { JobSpecFormValues } from '../../schemas/jobSpec';
 import { COMMON_LABELS } from '../../constants/common';
 import { CREATE_JOB_TEXTS } from '../../constants/createJob';
+import AppButton from '../common/AppButton';
 
+/**
+ * The "Transforms" section of the create-job form: an optional,
+ * repeatable list of field transforms (uppercase/lowercase) to apply
+ * before aggregation.
+ */
 export default function TransformInput() {
   const {
     register,
@@ -30,22 +36,26 @@ export default function TransformInput() {
               {...register(`transforms.${i}.params.field`)}
               className="flex-1 border border-neutral-300 rounded-lg px-3 py-2 text-sm"
             />
-            <button type="button" onClick={() => remove(i)} className="px-3 text-neutral-400 hover:text-danger-600">
+            <AppButton
+              type="button"
+              onClick={() => remove(i)}
+              className="px-3 text-neutral-400 hover:text-danger-600"
+            >
               {COMMON_LABELS.REMOVE}
-            </button>
+            </AppButton>
           </div>
           {errors.transforms?.[i]?.params?.field && (
             <p className="text-xs text-danger-600 mt-1">{errors.transforms[i]?.params?.field?.message}</p>
           )}
         </div>
       ))}
-      <button
+      <AppButton
         type="button"
         onClick={() => append({ name: 'uppercase', params: { field: '' } })}
         className="text-sm text-brand-600 hover:text-brand-700 font-medium"
       >
         {CREATE_JOB_TEXTS.ADD_TRANSFORM}
-      </button>
+      </AppButton>
     </div>
   );
 }

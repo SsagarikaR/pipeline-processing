@@ -10,6 +10,11 @@ import CreateJobModal from '../components/jobList/CreateJobModal';
 import { ROUTES, COMMON_LABELS } from '../constants/common';
 import { JOB_LIST_TEXTS } from '../constants/jobList';
 
+/**
+ * The home page: lists every pipeline job, auto-refreshing every 15
+ * minutes (or on demand), with entry points to create a new job and to
+ * delete an existing one.
+ */
 export default function JobList() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,6 +24,7 @@ export default function JobList() {
   const [deleteJobId, setDeleteJobId] = useState<number | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
+  /** Fetches the job list from the API and updates loading/error state around it. */
   async function loadJobs() {
     setLoading(true);
     try {
@@ -39,12 +45,17 @@ export default function JobList() {
     return () => clearInterval(interval);
   }, []);
 
+  /**
+   * Opens the delete-confirmation modal for a job. Stops the click from
+   * also triggering the card's own Link navigation to the job detail page.
+   */
   function promptDelete(id: number, e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
     setDeleteJobId(id);
   }
 
+  /** Deletes the job the confirmation modal is open for, then refreshes the list. */
   async function handleDelete() {
     if (deleteJobId) {
       await api.deleteJob(deleteJobId);

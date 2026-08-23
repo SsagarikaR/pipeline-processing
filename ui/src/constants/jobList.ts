@@ -1,3 +1,4 @@
+/** Copy used on the job list page. */
 export const JOB_LIST_TEXTS = {
   TITLE: 'Pipeline Jobs',
   LAST_FETCHED: 'Last fetched: ',
@@ -8,6 +9,7 @@ export const JOB_LIST_TEXTS = {
   PROCESSED: 'processed',
   ERRORS: 'errors',
   DELETE_MODAL_TITLE: 'Delete Job',
+  /** Confirmation message for deleting a specific job. */
   deleteModalMessage: (id: string | number) => `Delete job #${id}? This removes its results and errors too.`,
   FETCH_ERROR: 'Failed to load jobs — is the backend running on :8081?',
 };

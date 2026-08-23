@@ -1,5 +1,6 @@
 import type { JobStatus } from '../types/job';
 
+/** Tailwind classes for each job status, used by StatusBadge. */
 export const STATUS_BADGE_STYLES: Record<JobStatus, string> = {
   pending: 'bg-neutral-100 text-neutral-700 border-neutral-300',
   running: 'bg-brand-100 text-brand-700 border-brand-300 animate-pulse',
@@ -8,12 +9,15 @@ export const STATUS_BADGE_STYLES: Record<JobStatus, string> = {
   cancelled: 'bg-amber-100 text-amber-700 border-amber-300',
 };
 
+/** Client-side (react-router) paths. */
 export const ROUTES = {
   HOME: '/',
   JOB_DETAIL: '/jobs/:id',
+  /** Concrete URL for a specific job's detail page. */
   jobDetail: (id: string | number) => `/jobs/${id}`,
 };
 
+/** Short, reusable button/label text shared across pages. */
 export const COMMON_LABELS = {
   BACK_TO_JOBS: '← Back to Jobs',
   DELETE: 'Delete',
@@ -24,9 +28,11 @@ export const COMMON_LABELS = {
   REMOVE: '✕',
 };
 
+/** Copy shown by ErrorBoundary's fallback screen. */
 export const ERROR_BOUNDARY_TEXTS = {
   TITLE: 'Something went wrong',
   MESSAGE: 'An unexpected error occurred in the application.',
   RELOAD_BUTTON: 'Reload Page',
+  /** Toast message shown when a render error is caught. */
   toastMessage: (error: string) => `A critical error occurred: ${error}`,
 };
