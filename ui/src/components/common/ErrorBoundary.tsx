@@ -1,8 +1,8 @@
 import  { Component, ErrorInfo } from 'react';
 import toast from 'react-hot-toast';
 
-import { ErrorBoundaryProps, ErrorBoundaryState } from '../types/common';
-import { ERROR_BOUNDARY_TEXTS } from '../constants/common';
+import { ErrorBoundaryProps, ErrorBoundaryState } from '../../types/common';
+import { ERROR_BOUNDARY_TEXTS } from '../../constants/common';
 
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = {

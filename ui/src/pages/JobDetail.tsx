@@ -3,10 +3,10 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { jobService as api } from '../service/jobService';
 import type { Result, JobError } from '../types/job';
 import { RefreshCw } from 'lucide-react';
-import StatusBadge from '../components/StatusBadge';
+import StatusBadge from '../components/common/StatusBadge';
 import usePolling from '../hooks/usePolling';
-import AppButton from '../components/AppButton';
-import ConfirmModal from '../components/ConfirmModal';
+import AppButton from '../components/common/AppButton';
+import ConfirmModal from '../components/common/ConfirmModal';
 import { ROUTES, COMMON_LABELS } from '../constants/common';
 import { JOB_DETAIL_TEXTS } from '../constants/jobDetail';
 

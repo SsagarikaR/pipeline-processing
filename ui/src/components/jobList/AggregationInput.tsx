@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
-import type { JobSpecFormValues } from '../schemas/jobSpec';
-import { COMMON_LABELS } from '../constants/common';
-import { CREATE_JOB_TEXTS, AGGREGATION_FIELD_TYPES, AGGREGATION_OPS_BY_FIELD_TYPE } from '../constants/createJob';
+import type { JobSpecFormValues } from '../../schemas/jobSpec';
+import { COMMON_LABELS } from '../../constants/common';
+import { CREATE_JOB_TEXTS, AGGREGATION_FIELD_TYPES, AGGREGATION_OPS_BY_FIELD_TYPE } from '../../constants/createJob';
 
 export default function AggregationInput() {
   const {

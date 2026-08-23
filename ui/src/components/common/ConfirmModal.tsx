@@ -1,7 +1,7 @@
 import AppButton from './AppButton';
 
-import { ConfirmModalProps } from '../types/common';
-import { COMMON_LABELS } from '../constants/common';
+import { ConfirmModalProps } from '../../types/common';
+import { COMMON_LABELS } from '../../constants/common';
 
 export default function ConfirmModal({ isOpen, title, message, onConfirm, onCancel }: ConfirmModalProps) {
   if (!isOpen) return null;

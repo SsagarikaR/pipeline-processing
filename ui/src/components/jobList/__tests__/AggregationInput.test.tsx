@@ -2,8 +2,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import TransformInput from '../TransformInput';
-import { jobSpecSchema, type JobSpecFormValues } from '../../schemas/jobSpec';
+import AggregationInput from '../AggregationInput';
+import { jobSpecSchema, type JobSpecFormValues } from '../../../schemas/jobSpec';
 
 const VALID_SPEC: JobSpecFormValues = {
   sources: [{ type: 'csv', path: 'in.csv' }],
@@ -21,34 +21,34 @@ function Harness({ defaultValues = VALID_SPEC }: { defaultValues?: JobSpecFormVa
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(() => {})}>
-        <TransformInput />
+        <AggregationInput />
         <button type="submit">Submit</button>
       </form>
     </FormProvider>
   );
 }
 
-describe('TransformInput', () => {
-  it('renders a row per transform and handles additions', () => {
-    render(<Harness />);
+describe('AggregationInput', () => {
+  it('renders a row per aggregation and handles additions', () => {
+    render(<Harness defaultValues={{ ...VALID_SPEC, aggregations: [] }} />);
 
-    expect(screen.getByText('Transforms')).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText('field name')).not.toBeInTheDocument();
+    expect(screen.getByText('Aggregations')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('field')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('+ Add transform'));
-    expect(screen.getByPlaceholderText('field name')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('+ Add aggregation'));
+    expect(screen.getByPlaceholderText('field')).toBeInTheDocument();
   });
 
   it('removes a row', () => {
-    render(<Harness defaultValues={{ ...VALID_SPEC, transforms: [{ name: 'uppercase', params: { field: 'name' } }] }} />);
+    render(<Harness />);
 
-    expect(screen.getByPlaceholderText('field name')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('field')).toBeInTheDocument();
     fireEvent.click(screen.getByText('✕'));
-    expect(screen.queryByPlaceholderText('field name')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('field')).not.toBeInTheDocument();
   });
 
-  it('shows a validation error for an empty transform field on submit', async () => {
-    render(<Harness defaultValues={{ ...VALID_SPEC, transforms: [{ name: 'uppercase', params: { field: '' } }] }} />);
+  it('shows a validation error for an empty aggregation field on submit', async () => {
+    render(<Harness defaultValues={{ ...VALID_SPEC, aggregations: [{ field: '', op: 'sum', groupBy: '' }] }} />);
 
     fireEvent.click(screen.getByText('Submit'));
 

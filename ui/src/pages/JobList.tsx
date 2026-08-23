@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { RefreshCw, WifiOff } from 'lucide-react';
 import { jobService as api } from '../service/jobService';
 import type { Job } from '../types/job';
-import StatusBadge from '../components/StatusBadge';
-import AppButton from '../components/AppButton';
-import ConfirmModal from '../components/ConfirmModal';
-import CreateJobModal from '../components/CreateJobModal';
+import StatusBadge from '../components/common/StatusBadge';
+import AppButton from '../components/common/AppButton';
+import ConfirmModal from '../components/common/ConfirmModal';
+import CreateJobModal from '../components/jobList/CreateJobModal';
 import { ROUTES, COMMON_LABELS } from '../constants/common';
 import { JOB_LIST_TEXTS } from '../constants/jobList';
 

@@ -2,9 +2,9 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import CreateJobModal from '../CreateJobModal';
-import { jobService } from '../../service/jobService';
+import { jobService } from '../../../service/jobService';
 
-vi.mock('../../service/jobService', () => ({
+vi.mock('../../../service/jobService', () => ({
   jobService: {
     createJob: vi.fn(),
   },

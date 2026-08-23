@@ -1,5 +1,5 @@
-import { StatusBadgeProps } from '../types/common';
-import { STATUS_BADGE_STYLES } from '../constants/common';
+import { StatusBadgeProps } from '../../types/common';
+import { STATUS_BADGE_STYLES } from '../../constants/common';
 
 export default function StatusBadge({ status }: StatusBadgeProps) {
   const style = STATUS_BADGE_STYLES[status] ?? STATUS_BADGE_STYLES.pending;

@@ -3,17 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
-import { jobService as api } from '../service/jobService';
-import type { JobSpec } from '../types/job';
-import type { CreateJobModalProps } from '../types/common';
-import { jobSpecSchema, type JobSpecFormValues } from '../schemas/jobSpec';
+import { jobService as api } from '../../service/jobService';
+import type { JobSpec } from '../../types/job';
+import type { CreateJobModalProps } from '../../types/common';
+import { jobSpecSchema, type JobSpecFormValues } from '../../schemas/jobSpec';
 import SourceInput from './SourceInput';
 import TransformInput from './TransformInput';
 import AggregationInput from './AggregationInput';
 import ExportInput from './ExportInput';
-import AppButton from './AppButton';
-import { ROUTES, COMMON_LABELS } from '../constants/common';
-import { CREATE_JOB_TEXTS } from '../constants/createJob';
+import AppButton from '../common/AppButton';
+import { ROUTES, COMMON_LABELS } from '../../constants/common';
+import { CREATE_JOB_TEXTS } from '../../constants/createJob';
 
 const EMPTY_SPEC: JobSpecFormValues = {
   sources: [{ type: 'csv', path: '' }],

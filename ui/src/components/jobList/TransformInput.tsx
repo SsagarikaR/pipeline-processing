@@ -1,7 +1,7 @@
 import { useFieldArray, useFormContext } from 'react-hook-form';
-import type { JobSpecFormValues } from '../schemas/jobSpec';
-import { COMMON_LABELS } from '../constants/common';
-import { CREATE_JOB_TEXTS } from '../constants/createJob';
+import type { JobSpecFormValues } from '../../schemas/jobSpec';
+import { COMMON_LABELS } from '../../constants/common';
+import { CREATE_JOB_TEXTS } from '../../constants/createJob';
 
 export default function TransformInput() {
   const {
