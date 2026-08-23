@@ -1,16 +1,8 @@
 import { useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
-import type { AggregationOp } from '../types/job';
 import type { JobSpecFormValues } from '../schemas/jobSpec';
-
-const FIELD_TYPES = ['Number', 'String', 'Boolean', 'Date'] as const;
-
-const AGG_OPS: Record<string, AggregationOp[]> = {
-  Number: ['sum', 'avg', 'min', 'max', 'count'],
-  String: ['count'],
-  Boolean: ['count'],
-  Date: ['min', 'max', 'count'],
-};
+import { COMMON_LABELS } from '../constants/common';
+import { CREATE_JOB_TEXTS, AGGREGATION_FIELD_TYPES, AGGREGATION_OPS_BY_FIELD_TYPE } from '../constants/createJob';
 
 export default function AggregationInput() {
   const {
@@ -28,7 +20,7 @@ export default function AggregationInput() {
 
   function handleTypeChange(fieldId: string, index: number, type: string) {
     setTypeByFieldId((prev) => ({ ...prev, [fieldId]: type }));
-    const availableOps = AGG_OPS[type] ?? [];
+    const availableOps = AGGREGATION_OPS_BY_FIELD_TYPE[type] ?? [];
     const currentOp = currentOps?.[index]?.op;
     if (!currentOp || !availableOps.includes(currentOp)) {
       setValue(`aggregations.${index}.op`, availableOps[0] ?? 'count', { shouldValidate: true });
@@ -38,11 +30,11 @@ export default function AggregationInput() {
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-neutral-700">
-        Aggregations <span className="text-danger-600">*</span>
+        {CREATE_JOB_TEXTS.AGGREGATIONS_LABEL} <span className="text-danger-600">*</span>
       </label>
       {fields.map((field, i) => {
         const currentType = typeByFieldId[field.id] ?? 'Number';
-        const availableOps = AGG_OPS[currentType] ?? AGG_OPS.Number;
+        const availableOps = AGGREGATION_OPS_BY_FIELD_TYPE[currentType] ?? AGGREGATION_OPS_BY_FIELD_TYPE.Number;
         const fieldError = errors.aggregations?.[i]?.field?.message;
 
         return (
@@ -53,7 +45,7 @@ export default function AggregationInput() {
                 onChange={(e) => handleTypeChange(field.id, i, e.target.value)}
                 className="border border-neutral-300 rounded-lg px-3 py-2 text-sm w-32"
               >
-                {FIELD_TYPES.map((t) => (
+                {AGGREGATION_FIELD_TYPES.map((t) => (
                   <option key={t} value={t}>
                     {t}
                   </option>
@@ -70,17 +62,17 @@ export default function AggregationInput() {
                 ))}
               </select>
               <input
-                placeholder="field"
+                placeholder={CREATE_JOB_TEXTS.AGGREGATION_FIELD_PLACEHOLDER}
                 {...register(`aggregations.${i}.field`)}
                 className="border border-neutral-300 rounded-lg px-3 py-2 text-sm w-32"
               />
               <input
-                placeholder="group by (optional)"
+                placeholder={CREATE_JOB_TEXTS.AGGREGATION_GROUP_BY_PLACEHOLDER}
                 {...register(`aggregations.${i}.groupBy`)}
                 className="flex-1 border border-neutral-300 rounded-lg px-3 py-2 text-sm"
               />
               <button type="button" onClick={() => remove(i)} className="px-3 text-neutral-400 hover:text-danger-600">
-                ✕
+                {COMMON_LABELS.REMOVE}
               </button>
             </div>
             {fieldError && <p className="text-xs text-danger-600 mt-1">{fieldError}</p>}
@@ -93,7 +85,7 @@ export default function AggregationInput() {
         onClick={() => append({ field: '', op: 'sum', groupBy: '' })}
         className="text-sm text-brand-600 hover:text-brand-700 font-medium"
       >
-        + Add aggregation
+        {CREATE_JOB_TEXTS.ADD_AGGREGATION}
       </button>
     </div>
   );

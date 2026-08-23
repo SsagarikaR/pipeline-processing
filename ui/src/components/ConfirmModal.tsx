@@ -1,6 +1,7 @@
 import AppButton from './AppButton';
 
 import { ConfirmModalProps } from '../types/common';
+import { COMMON_LABELS } from '../constants/common';
 
 export default function ConfirmModal({ isOpen, title, message, onConfirm, onCancel }: ConfirmModalProps) {
   if (!isOpen) return null;
@@ -11,8 +12,8 @@ export default function ConfirmModal({ isOpen, title, message, onConfirm, onCanc
         <h3 className="text-lg font-semibold text-neutral-900 mb-2">{title}</h3>
         <p className="text-sm text-neutral-500 mb-6">{message}</p>
         <div className="flex justify-end gap-3">
-          <AppButton variant="secondary" onClick={onCancel}>Cancel</AppButton>
-          <AppButton variant="danger" onClick={onConfirm}>Confirm</AppButton>
+          <AppButton variant="secondary" onClick={onCancel}>{COMMON_LABELS.CANCEL}</AppButton>
+          <AppButton variant="danger" onClick={onConfirm}>{COMMON_LABELS.CONFIRM}</AppButton>
         </div>
       </div>
     </div>

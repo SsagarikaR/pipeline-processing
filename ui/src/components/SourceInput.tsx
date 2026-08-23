@@ -1,5 +1,7 @@
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import type { JobSpecFormValues } from '../schemas/jobSpec';
+import { COMMON_LABELS } from '../constants/common';
+import { CREATE_JOB_TEXTS } from '../constants/createJob';
 
 export default function SourceInput() {
   const {
@@ -28,7 +30,7 @@ export default function SourceInput() {
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-neutral-700">
-        Sources <span className="text-danger-600">*</span>
+        {CREATE_JOB_TEXTS.SOURCES_LABEL} <span className="text-danger-600">*</span>
       </label>
       {fields.map((field, i) => (
         <div key={field.id}>
@@ -43,12 +45,12 @@ export default function SourceInput() {
             <div className="flex-1 flex gap-2">
               <input
                 type="text"
-                placeholder="/path/to/file or Data URI"
+                placeholder={CREATE_JOB_TEXTS.SOURCE_PATH_PLACEHOLDER}
                 {...register(`sources.${i}.path`)}
                 className="flex-1 border border-neutral-300 rounded-lg px-3 py-2 text-sm"
               />
               <label className="cursor-pointer border border-neutral-300 rounded-lg px-3 py-2 text-sm bg-neutral-50 hover:bg-neutral-100 flex items-center shrink-0">
-                <span>Upload</span>
+                <span>{CREATE_JOB_TEXTS.SOURCE_UPLOAD}</span>
                 <input
                   type="file"
                   className="hidden"
@@ -62,7 +64,7 @@ export default function SourceInput() {
               </label>
             </div>
             <button type="button" onClick={() => remove(i)} className="px-3 text-neutral-400 hover:text-danger-600">
-              ✕
+              {COMMON_LABELS.REMOVE}
             </button>
           </div>
           {errors.sources?.[i]?.path && (
@@ -76,7 +78,7 @@ export default function SourceInput() {
         onClick={() => append({ type: 'csv', path: '' })}
         className="text-sm text-brand-600 hover:text-brand-700 font-medium"
       >
-        + Add source
+        {CREATE_JOB_TEXTS.ADD_SOURCE}
       </button>
     </div>
   );

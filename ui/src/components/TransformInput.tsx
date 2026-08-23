@@ -1,5 +1,7 @@
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import type { JobSpecFormValues } from '../schemas/jobSpec';
+import { COMMON_LABELS } from '../constants/common';
+import { CREATE_JOB_TEXTS } from '../constants/createJob';
 
 export default function TransformInput() {
   const {
@@ -11,7 +13,7 @@ export default function TransformInput() {
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-neutral-700">Transforms</label>
+      <label className="block text-sm font-medium text-neutral-700">{CREATE_JOB_TEXTS.TRANSFORMS_LABEL}</label>
       {fields.map((field, i) => (
         <div key={field.id}>
           <div className="flex gap-2 items-center">
@@ -24,12 +26,12 @@ export default function TransformInput() {
             </select>
 
             <input
-              placeholder="field name"
+              placeholder={CREATE_JOB_TEXTS.TRANSFORM_FIELD_PLACEHOLDER}
               {...register(`transforms.${i}.params.field`)}
               className="flex-1 border border-neutral-300 rounded-lg px-3 py-2 text-sm"
             />
             <button type="button" onClick={() => remove(i)} className="px-3 text-neutral-400 hover:text-danger-600">
-              ✕
+              {COMMON_LABELS.REMOVE}
             </button>
           </div>
           {errors.transforms?.[i]?.params?.field && (
@@ -42,7 +44,7 @@ export default function TransformInput() {
         onClick={() => append({ name: 'uppercase', params: { field: '' } })}
         className="text-sm text-brand-600 hover:text-brand-700 font-medium"
       >
-        + Add transform
+        {CREATE_JOB_TEXTS.ADD_TRANSFORM}
       </button>
     </div>
   );

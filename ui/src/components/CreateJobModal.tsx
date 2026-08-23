@@ -12,7 +12,7 @@ import TransformInput from './TransformInput';
 import AggregationInput from './AggregationInput';
 import ExportInput from './ExportInput';
 import AppButton from './AppButton';
-import { ROUTES } from '../constants/common';
+import { ROUTES, COMMON_LABELS } from '../constants/common';
 import { CREATE_JOB_TEXTS } from '../constants/createJob';
 
 const EMPTY_SPEC: JobSpecFormValues = {
@@ -74,7 +74,7 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
           <button
             onClick={handleClose}
             className="text-neutral-400 hover:text-neutral-600 transition-colors"
-            aria-label="Close"
+            aria-label={CREATE_JOB_TEXTS.CLOSE_LABEL}
           >
             <X size={20} />
           </button>
@@ -127,7 +127,7 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
 
             <div className="flex justify-end gap-3">
               <AppButton type="button" variant="secondary" onClick={handleClose}>
-                Cancel
+                {COMMON_LABELS.CANCEL}
               </AppButton>
               <AppButton type="submit" disabled={isSubmitting} size="lg">
                 {isSubmitting ? CREATE_JOB_TEXTS.BTN_CREATING : CREATE_JOB_TEXTS.BTN_CREATE}

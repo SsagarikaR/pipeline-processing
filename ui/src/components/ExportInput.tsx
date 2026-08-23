@@ -1,5 +1,7 @@
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import type { JobSpecFormValues } from '../schemas/jobSpec';
+import { COMMON_LABELS } from '../constants/common';
+import { CREATE_JOB_TEXTS } from '../constants/createJob';
 
 export default function ExportInput() {
   const {
@@ -12,18 +14,18 @@ export default function ExportInput() {
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-neutral-700">
-        Exports <span className="text-danger-600">*</span>
+        {CREATE_JOB_TEXTS.EXPORTS_LABEL} <span className="text-danger-600">*</span>
       </label>
       {fields.map((field, i) => (
         <div key={field.id}>
           <div className="flex gap-2 items-center">
             <input
-              placeholder="e.g., results.json"
+              placeholder={CREATE_JOB_TEXTS.EXPORT_PATH_PLACEHOLDER}
               {...register(`exports.${i}.path`)}
               className="flex-1 border border-neutral-300 rounded-lg px-3 py-2 text-sm"
             />
             <button type="button" onClick={() => remove(i)} className="px-3 text-neutral-400 hover:text-danger-600">
-              ✕
+              {COMMON_LABELS.REMOVE}
             </button>
           </div>
           {errors.exports?.[i]?.path && (
@@ -37,7 +39,7 @@ export default function ExportInput() {
         onClick={() => append({ type: 's3', path: '' })}
         className="text-sm text-brand-600 hover:text-brand-700 font-medium"
       >
-        + Add export
+        {CREATE_JOB_TEXTS.ADD_EXPORT}
       </button>
     </div>
   );
