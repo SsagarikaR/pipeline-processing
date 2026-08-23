@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { RefreshCw, WifiOff } from 'lucide-react';
 import { jobService as api } from '../service/jobService';
@@ -6,9 +6,13 @@ import type { Job } from '../types/job';
 import StatusBadge from '../components/common/StatusBadge';
 import AppButton from '../components/common/AppButton';
 import ConfirmModal from '../components/common/ConfirmModal';
-import CreateJobModal from '../components/jobList/CreateJobModal';
 import { ROUTES, COMMON_LABELS } from '../constants/common';
 import { JOB_LIST_TEXTS } from '../constants/jobList';
+
+// CreateJobModal pulls in react-hook-form/zod, which most visitors never
+// need (they're just here to look at the list) - only download it once
+// the user actually opens the modal.
+const CreateJobModal = lazy(() => import('../components/jobList/CreateJobModal'));
 
 /**
  * The home page: lists every pipeline job, auto-refreshing every 15
@@ -140,7 +144,11 @@ export default function JobList() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteJobId(null)}
       />
-      <CreateJobModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
+      {isCreateOpen && (
+        <Suspense fallback={null}>
+          <CreateJobModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
+        </Suspense>
+      )}
     </div>
   );
 }
