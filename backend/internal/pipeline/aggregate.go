@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
@@ -17,7 +19,7 @@ type aggOutput struct {
 // record off in, keeps a running sum/count per group as they arrive,
 // and once the channel closes it computes the final results and sends
 // them (along with every record it saw) on the returned channel.
-func runAggregation(ctx context.Context, jobID int, in <-chan Record, configs []AggregationConfig, progressCh chan<- struct{}) <-chan aggOutput {
+func runAggregation(ctx context.Context, jobID uuid.UUID, in <-chan Record, configs []AggregationConfig, progressCh chan<- struct{}) <-chan aggOutput {
 	outCh := make(chan aggOutput, 1)
 
 	go func() {
@@ -91,7 +93,7 @@ func groupKeyFor(c AggregationConfig, r Record) string {
 
 // buildResults turns the accumulated sums/counts into final Result rows,
 // resolving each group's operation (sum, avg, or count) from its key.
-func buildResults(jobID int, sums map[string]float64, counts map[string]int) []models.Result {
+func buildResults(jobID uuid.UUID, sums map[string]float64, counts map[string]int) []models.Result {
 	var results []models.Result
 	for key, count := range counts {
 		var val float64

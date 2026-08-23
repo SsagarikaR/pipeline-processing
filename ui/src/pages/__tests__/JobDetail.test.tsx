@@ -9,7 +9,7 @@ vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
-    useParams: () => ({ id: '1' }),
+    useParams: () => ({ id: 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d' }),
   };
 });
 
@@ -24,7 +24,7 @@ vi.mock('../../service/jobService', () => ({
 describe('JobDetail', () => {
   it('loads and displays job progress', async () => {
     vi.mocked(jobService.getProgress).mockResolvedValue({
-      jobId: 1,
+      jobId: 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d',
       status: 'running',
       processed: 100,
       errorCount: 0,
@@ -44,7 +44,7 @@ describe('JobDetail', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Job #1')).toBeInTheDocument();
+      expect(screen.getByText('Job #a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d')).toBeInTheDocument();
       expect(screen.getByText('100')).toBeInTheDocument(); // Processed
       expect(screen.getByText('10.5%')).toBeInTheDocument(); // percent
       expect(screen.getByText('5.0/s')).toBeInTheDocument(); // rate

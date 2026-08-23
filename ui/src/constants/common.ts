@@ -14,7 +14,7 @@ export const ROUTES = {
   HOME: '/',
   JOB_DETAIL: '/jobs/:id',
   /** Concrete URL for a specific job's detail page. */
-  jobDetail: (id: string | number) => `/jobs/${id}`,
+  jobDetail: (id: string) => `/jobs/${id}`,
 };
 
 /** Short, reusable button/label text shared across pages. */

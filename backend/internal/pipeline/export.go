@@ -11,6 +11,7 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/google/uuid"
 
 	"github.com/SsagarikaR/pipeline-processing/internal/config"
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
@@ -21,7 +22,7 @@ import (
 // every configured exporter (e.g. writing to S3) and records the
 // resulting URL. The returned channel closes once all of that is done,
 // signalling the whole pipeline run is finished.
-func runExport(ctx context.Context, jobID int, in <-chan aggOutput, exports []ExportConfig, resultStore func(ctx context.Context, results []models.Result) error, storeURL func(ctx context.Context, url string) error, errCh chan<- ProcessError) <-chan struct{} {
+func runExport(ctx context.Context, jobID uuid.UUID, in <-chan aggOutput, exports []ExportConfig, resultStore func(ctx context.Context, results []models.Result) error, storeURL func(ctx context.Context, url string) error, errCh chan<- ProcessError) <-chan struct{} {
 	doneCh := make(chan struct{})
 
 	go func() {

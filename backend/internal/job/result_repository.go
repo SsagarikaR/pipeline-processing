@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
@@ -25,7 +27,7 @@ func (s *postgresResultStore) InsertResults(ctx context.Context, results []model
 }
 
 // GetResultsByJob returns all the aggregated results for a job.
-func (s *postgresResultStore) GetResultsByJob(ctx context.Context, jobID int) ([]models.Result, error) {
+func (s *postgresResultStore) GetResultsByJob(ctx context.Context, jobID uuid.UUID) ([]models.Result, error) {
 	rows, err := s.db.QueryContext(ctx,
 		`SELECT id, job_id, group_key, aggregated_value, created_at FROM job_results WHERE job_id = $1`, jobID)
 	if err != nil {

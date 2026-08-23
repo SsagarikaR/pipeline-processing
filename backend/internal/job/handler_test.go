@@ -8,14 +8,16 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/google/uuid"
+
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 	"github.com/SsagarikaR/pipeline-processing/internal/pipeline"
 )
 
 func setupTestHandler() (*pipelineHandler, *mockJobStore, *mockResultStore, *mockErrorStore) {
-	js := &mockJobStore{Jobs: make(map[int]models.Job)}
-	rs := &mockResultStore{Results: make(map[int][]models.Result)}
-	es := &mockErrorStore{Errors: make(map[int][]models.JobError)}
+	js := &mockJobStore{Jobs: make(map[uuid.UUID]models.Job)}
+	rs := &mockResultStore{Results: make(map[uuid.UUID][]models.Result)}
+	es := &mockErrorStore{Errors: make(map[uuid.UUID][]models.JobError)}
 	svc := NewJobService(js, rs, es)
 	return NewPipelineHandler(svc), js, rs, es
 }
@@ -41,8 +43,8 @@ func TestCreateJob_Success(t *testing.T) {
 	if err := json.NewDecoder(w.Body).Decode(&j); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
-	if j.ID != 1 {
-		t.Errorf("expected job ID 1, got %d", j.ID)
+	if j.ID == uuid.Nil {
+		t.Error("expected a generated job ID, got the zero UUID")
 	}
 }
 
@@ -64,10 +66,11 @@ func TestCreateJob_InvalidSpec(t *testing.T) {
 
 func TestGetJob_Success(t *testing.T) {
 	h, js, _, _ := setupTestHandler()
-	js.Jobs[1] = models.Job{ID: 1, Status: pipeline.StatusRunning}
+	id := uuid.New()
+	js.Jobs[id] = models.Job{ID: id, Status: pipeline.StatusRunning}
 
-	req := httptest.NewRequest(http.MethodGet, "/pipelines/1", nil)
-	req.SetPathValue("id", "1")
+	req := httptest.NewRequest(http.MethodGet, "/pipelines/"+id.String(), nil)
+	req.SetPathValue("id", id.String())
 	w := httptest.NewRecorder()
 
 	h.GetJob(w, req)
@@ -79,15 +82,16 @@ func TestGetJob_Success(t *testing.T) {
 
 func TestCancelJob_Success(t *testing.T) {
 	h, js, _, _ := setupTestHandler()
-	js.Jobs[1] = models.Job{ID: 1, Status: pipeline.StatusRunning}
+	id := uuid.New()
+	js.Jobs[id] = models.Job{ID: id, Status: pipeline.StatusRunning}
 
 	_, cancel := context.WithCancel(context.Background())
 	h.service.mu.Lock()
-	h.service.cancelFuncs[1] = cancel
+	h.service.cancelFuncs[id] = cancel
 	h.service.mu.Unlock()
 
-	req := httptest.NewRequest(http.MethodPatch, "/pipelines/1/cancel", nil)
-	req.SetPathValue("id", "1")
+	req := httptest.NewRequest(http.MethodPatch, "/pipelines/"+id.String()+"/cancel", nil)
+	req.SetPathValue("id", id.String())
 	w := httptest.NewRecorder()
 
 	h.CancelJob(w, req)
@@ -99,14 +103,15 @@ func TestCancelJob_Success(t *testing.T) {
 
 func TestGetProgress_Success(t *testing.T) {
 	h, js, _, _ := setupTestHandler()
-	js.Jobs[1] = models.Job{ID: 1, Status: pipeline.StatusRunning, TotalRecords: 100}
+	id := uuid.New()
+	js.Jobs[id] = models.Job{ID: id, Status: pipeline.StatusRunning, TotalRecords: 100}
 
 	h.service.mu.Lock()
-	h.service.trackers[1] = pipeline.NewTracker(func(e pipeline.ProcessError) {})
+	h.service.trackers[id] = pipeline.NewTracker(func(e pipeline.ProcessError) {})
 	h.service.mu.Unlock()
 
-	req := httptest.NewRequest(http.MethodGet, "/pipelines/1/progress", nil)
-	req.SetPathValue("id", "1")
+	req := httptest.NewRequest(http.MethodGet, "/pipelines/"+id.String()+"/progress", nil)
+	req.SetPathValue("id", id.String())
 	w := httptest.NewRecorder()
 
 	h.GetProgress(w, req)
@@ -118,7 +123,8 @@ func TestGetProgress_Success(t *testing.T) {
 
 func TestGetAllJobs_Success(t *testing.T) {
 	h, js, _, _ := setupTestHandler()
-	js.Jobs[1] = models.Job{ID: 1}
+	id := uuid.New()
+	js.Jobs[id] = models.Job{ID: id}
 
 	req := httptest.NewRequest(http.MethodGet, "/pipelines", nil)
 	w := httptest.NewRecorder()
@@ -132,10 +138,11 @@ func TestGetAllJobs_Success(t *testing.T) {
 
 func TestDeleteJobs_Success(t *testing.T) {
 	h, js, _, _ := setupTestHandler()
-	js.Jobs[1] = models.Job{ID: 1}
+	id := uuid.New()
+	js.Jobs[id] = models.Job{ID: id}
 
-	req := httptest.NewRequest(http.MethodDelete, "/pipelines/1", nil)
-	req.SetPathValue("id", "1")
+	req := httptest.NewRequest(http.MethodDelete, "/pipelines/"+id.String(), nil)
+	req.SetPathValue("id", id.String())
 	w := httptest.NewRecorder()
 
 	h.DeleteJobs(w, req)
@@ -147,10 +154,11 @@ func TestDeleteJobs_Success(t *testing.T) {
 
 func TestGetResults_Success(t *testing.T) {
 	h, _, rs, _ := setupTestHandler()
-	rs.Results[1] = []models.Result{{JobID: 1}}
+	id := uuid.New()
+	rs.Results[id] = []models.Result{{JobID: id}}
 
-	req := httptest.NewRequest(http.MethodGet, "/pipelines/1/results", nil)
-	req.SetPathValue("id", "1")
+	req := httptest.NewRequest(http.MethodGet, "/pipelines/"+id.String()+"/results", nil)
+	req.SetPathValue("id", id.String())
 	w := httptest.NewRecorder()
 
 	h.GetResults(w, req)
@@ -162,10 +170,11 @@ func TestGetResults_Success(t *testing.T) {
 
 func TestGetErrors_Success(t *testing.T) {
 	h, _, _, es := setupTestHandler()
-	es.Errors[1] = []models.JobError{{JobID: 1}}
+	id := uuid.New()
+	es.Errors[id] = []models.JobError{{JobID: id}}
 
-	req := httptest.NewRequest(http.MethodGet, "/pipelines/1/errors", nil)
-	req.SetPathValue("id", "1")
+	req := httptest.NewRequest(http.MethodGet, "/pipelines/"+id.String()+"/errors", nil)
+	req.SetPathValue("id", id.String())
 	w := httptest.NewRecorder()
 
 	h.GetErrors(w, req)

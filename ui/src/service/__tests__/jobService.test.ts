@@ -20,20 +20,20 @@ describe('jobService (Unit Test)', () => {
   });
 
   it('getAllJobs fetches successfully', async () => {
-    const mockJobs = [{ id: 1, status: 'completed' }];
+    const mockJobs = [{ id: 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', status: 'completed' }];
     vi.mocked(axiosInstance.get).mockResolvedValueOnce({ data: mockJobs });
 
     const jobs = await jobService.getAllJobs();
-    
+
     expect(axiosInstance.get).toHaveBeenCalledWith('/pipelines');
     expect(jobs).toEqual(mockJobs);
   });
 
   it('cancelJob issues a patch request', async () => {
     vi.mocked(axiosInstance.patch).mockResolvedValueOnce({});
-    
-    await jobService.cancelJob(42);
-    
-    expect(axiosInstance.patch).toHaveBeenCalledWith('/pipelines/42/cancel');
+
+    await jobService.cancelJob('a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d');
+
+    expect(axiosInstance.patch).toHaveBeenCalledWith('/pipelines/a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d/cancel');
   });
 });

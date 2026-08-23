@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
@@ -58,7 +60,7 @@ func TestEngineRun_Success(t *testing.T) {
 		return nil
 	}
 
-	status := Run(context.Background(), 1, spec, tracker, resultStore, urlStore)
+	status := Run(context.Background(), uuid.New(), spec, tracker, resultStore, urlStore)
 
 	if status != StatusCompleted {
 		t.Errorf("expected status %s, got %s", StatusCompleted, status)
@@ -100,7 +102,7 @@ func TestEngineRun_MalformedSource(t *testing.T) {
 		return nil
 	}
 
-	status := Run(context.Background(), 2, spec, tracker, resultStore, urlStore)
+	status := Run(context.Background(), uuid.New(), spec, tracker, resultStore, urlStore)
 
 	if status != StatusFailed {
 		t.Errorf("expected status %s, got %s", StatusFailed, status)
@@ -144,7 +146,7 @@ func TestEngineRun_API_JSON(t *testing.T) {
 		return nil
 	}
 
-	status := Run(context.Background(), 3, spec, tracker, resultStore, urlStore)
+	status := Run(context.Background(), uuid.New(), spec, tracker, resultStore, urlStore)
 
 	if status != StatusCompleted {
 		t.Errorf("expected status %s, got %s", StatusCompleted, status)

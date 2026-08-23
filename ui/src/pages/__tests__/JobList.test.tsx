@@ -16,7 +16,7 @@ describe('JobList (Integration Test)', () => {
   it('shows loading state initially and then renders jobs', async () => {
     // Setup mock to return a test job
     vi.mocked(jobService.getAllJobs).mockResolvedValue([{
-      id: 1,
+      id: 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d',
       status: 'running',
       total_records: 1000,
       processed_records: 500,

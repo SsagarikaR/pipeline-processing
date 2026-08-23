@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 	"github.com/SsagarikaR/pipeline-processing/internal/pipeline"
 )
@@ -43,7 +45,7 @@ func (s *postgresJobStore) CreateJob(ctx context.Context, spec json.RawMessage) 
 }
 
 // GetJob fetches one job row by ID.
-func (s *postgresJobStore) GetJob(ctx context.Context, jobID int) (models.Job, error) {
+func (s *postgresJobStore) GetJob(ctx context.Context, jobID uuid.UUID) (models.Job, error) {
 	var job models.Job
 	err := s.db.QueryRowContext(ctx, `
 	    SELECT id, status, spec, total_records, processed_records, error_count, created_at, started_at, completed_at, export_url
@@ -106,10 +108,10 @@ func (s *postgresJobStore) GetAllJobs(ctx context.Context) ([]models.Job, error)
 
 // DeleteJobs removes a job row by ID. It returns sql.ErrNoRows if no job
 // with that ID existed.
-func (s *postgresJobStore) DeleteJobs(ctx context.Context, jobID int) error {
+func (s *postgresJobStore) DeleteJobs(ctx context.Context, jobID uuid.UUID) error {
 	result, err := s.db.ExecContext(ctx, `DELETE FROM jobs WHERE id = $1`, jobID)
 	if err != nil {
-		return fmt.Errorf("store delete job %d: %w", jobID, err)
+		return fmt.Errorf("store delete job %s: %w", jobID, err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
@@ -125,7 +127,7 @@ func (s *postgresJobStore) DeleteJobs(ctx context.Context, jobID int) error {
 // UpdateStatusAndMetrics writes a job's status and processed/error
 // counts, and also stamps started_at, completed_at, or total_records
 // depending on which status is being set.
-func (s *postgresJobStore) UpdateStatusAndMetrics(ctx context.Context, jobID int, status string, processed int64, errors int64) error {
+func (s *postgresJobStore) UpdateStatusAndMetrics(ctx context.Context, jobID uuid.UUID, status string, processed int64, errors int64) error {
 	query := `UPDATE jobs SET status = $1, processed_records = $2, error_count = $3`
 	args := []any{status, processed, errors}
 
@@ -156,7 +158,7 @@ func (s *postgresJobStore) UpdateStatusAndMetrics(ctx context.Context, jobID int
 }
 
 // UpdateExportURL saves the URL where a job's exported output landed.
-func (s *postgresJobStore) UpdateExportURL(ctx context.Context, jobID int, url string) error {
+func (s *postgresJobStore) UpdateExportURL(ctx context.Context, jobID uuid.UUID, url string) error {
 	result, err := s.db.ExecContext(ctx, `UPDATE jobs SET export_url = $1 WHERE id = $2`, url, jobID)
 	if err != nil {
 		return fmt.Errorf("store update export url: %w", err)

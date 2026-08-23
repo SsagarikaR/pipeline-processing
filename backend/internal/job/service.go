@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/google/uuid"
+
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 	"github.com/SsagarikaR/pipeline-processing/internal/pipeline"
 )
@@ -21,8 +23,8 @@ func NewJobService(store JobStore, resultStore ResultStore, errorStore ErrorStor
 		store:       store,
 		resultStore: resultStore,
 		errorStore:  errorStore,
-		cancelFuncs: make(map[int]context.CancelFunc),
-		trackers:    make(map[int]*pipeline.Tracker),
+		cancelFuncs: make(map[uuid.UUID]context.CancelFunc),
+		trackers:    make(map[uuid.UUID]*pipeline.Tracker),
 	}
 }
 
@@ -52,7 +54,7 @@ func (s *JobService) CreateJob(ctx context.Context, spec pipeline.JobSpec) (mode
 // cancelled or polled for progress while it's running, marks the job as
 // "running" up front, and writes the final status once the pipeline
 // finishes.
-func (s *JobService) startJob(jobID int, spec pipeline.JobSpec) {
+func (s *JobService) startJob(jobID uuid.UUID, spec pipeline.JobSpec) {
 	runCtx, cancel := context.WithCancel(context.Background())
 
 	tracker := pipeline.NewTracker(func(e pipeline.ProcessError) {
@@ -92,7 +94,7 @@ func (s *JobService) startJob(jobID int, spec pipeline.JobSpec) {
 }
 
 // GetJob fetches a single job by ID.
-func (s *JobService) GetJob(ctx context.Context, id int) (models.Job, error) {
+func (s *JobService) GetJob(ctx context.Context, id uuid.UUID) (models.Job, error) {
 	return s.store.GetJob(ctx, id)
 }
 
@@ -104,7 +106,7 @@ func (s *JobService) GetAllJobs(ctx context.Context) ([]models.Job, error) {
 // DeleteJob cancels the job if it's still running, forgets its
 // in-memory tracking state, and removes it (and its results/errors)
 // from the database.
-func (s *JobService) DeleteJob(ctx context.Context, id int) error {
+func (s *JobService) DeleteJob(ctx context.Context, id uuid.UUID) error {
 	s.mu.Lock()
 	if cancel, ok := s.cancelFuncs[id]; ok {
 		cancel()
@@ -119,7 +121,7 @@ func (s *JobService) DeleteJob(ctx context.Context, id int) error {
 // CancelJob stops a running job by calling its cancel function. It
 // returns an error if the job isn't currently running (e.g. it already
 // finished, or the ID doesn't exist).
-func (s *JobService) CancelJob(ctx context.Context, id int) error {
+func (s *JobService) CancelJob(ctx context.Context, id uuid.UUID) error {
 	s.mu.Lock()
 	cancel, ok := s.cancelFuncs[id]
 	s.mu.Unlock()
@@ -135,7 +137,7 @@ func (s *JobService) CancelJob(ctx context.Context, id int) error {
 // have been processed, how many errors have hit, and per-stage
 // latencies. If the job isn't running anymore it falls back to the
 // counts stored on the job row itself.
-func (s *JobService) GetProgress(ctx context.Context, id int) (models.Job, int64, int64, map[string]string, error) {
+func (s *JobService) GetProgress(ctx context.Context, id uuid.UUID) (models.Job, int64, int64, map[string]string, error) {
 	j, err := s.store.GetJob(ctx, id)
 	if err != nil {
 		return models.Job{}, 0, 0, nil, err
@@ -164,12 +166,12 @@ func (s *JobService) GetProgress(ctx context.Context, id int) (models.Job, int64
 }
 
 // GetResults returns the aggregated results a job produced.
-func (s *JobService) GetResults(ctx context.Context, id int) ([]models.Result, error) {
+func (s *JobService) GetResults(ctx context.Context, id uuid.UUID) ([]models.Result, error) {
 	return s.resultStore.GetResultsByJob(ctx, id)
 }
 
 // GetErrors returns the records that failed processing for a job.
-func (s *JobService) GetErrors(ctx context.Context, id int) ([]models.JobError, error) {
+func (s *JobService) GetErrors(ctx context.Context, id uuid.UUID) ([]models.JobError, error) {
 	return s.errorStore.GetErrorsByJob(ctx, id)
 }
 

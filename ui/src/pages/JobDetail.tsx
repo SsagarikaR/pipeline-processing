@@ -7,6 +7,9 @@ import StatusBadge from '../components/common/StatusBadge';
 import usePolling from '../hooks/usePolling';
 import AppButton from '../components/common/AppButton';
 import ConfirmModal from '../components/common/ConfirmModal';
+import MetricCard from '../components/jobDetail/MetricCard';
+import ResultsTable from '../components/jobDetail/ResultsTable';
+import ErrorsTable from '../components/jobDetail/ErrorsTable';
 import { ROUTES, COMMON_LABELS } from '../constants/common';
 import { JOB_DETAIL_TEXTS } from '../constants/jobDetail';
 
@@ -232,84 +235,6 @@ export default function JobDetail() {
                 onConfirm={handleCancel}
                 onCancel={() => setCancelModalOpen(false)}
             />
-        </div>
-    );
-}
-
-interface MetricCardProps {
-    label: string;
-    value: string | number;
-    tone?: 'default' | 'red';
-}
-
-/** One stat tile in the progress header (e.g. "Processed: 1,204"). */
-function MetricCard({ label, value, tone = 'default' }: MetricCardProps) {
-    const toneClass = tone === 'red' ? 'text-danger-600' : 'text-neutral-900';
-    return (
-        <div className="bg-white border border-neutral-200 rounded-lg p-3">
-            <div className="text-xs text-neutral-500 mb-1">{label}</div>
-            <div className={`text-lg font-semibold ${toneClass}`}>{value}</div>
-        </div>
-    );
-}
-
-interface ResultsTableProps {
-    results: Result[];
-    isTerminal: boolean;
-}
-
-/**
- * The "Results" tab: a table of aggregated values, or an explanatory
- * placeholder if the job hasn't finished yet or produced nothing.
- */
-function ResultsTable({ results, isTerminal }: ResultsTableProps) {
-    if (!isTerminal) {
-        return <div className="text-sm text-neutral-400 py-8 text-center">{JOB_DETAIL_TEXTS.RESULTS_PENDING}</div>;
-    }
-    if (!results || results.length === 0) {
-        return <div className="text-sm text-neutral-400 py-8 text-center">{JOB_DETAIL_TEXTS.RESULTS_EMPTY}</div>;
-    }
-    return (
-        <table className="w-full text-sm">
-            <thead>
-                <tr className="text-left text-neutral-500 border-b border-neutral-200">
-                    <th className="py-2 font-medium">Group Key</th>
-                    <th className="py-2 font-medium">Aggregated Value</th>
-                </tr>
-            </thead>
-            <tbody>
-                {results.map((r) => (
-                    <tr key={r.id} className="border-b border-neutral-100">
-                        <td className="py-2 font-mono text-xs text-neutral-700">{r.group_key}</td>
-                        <td className="py-2 text-neutral-900">{r.aggregated_value.toLocaleString()}</td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    );
-}
-
-interface ErrorsTableProps {
-    errors: JobError[];
-}
-
-/** The "Errors" tab: a list of records that failed processing, with the stage and reason. */
-function ErrorsTable({ errors }: ErrorsTableProps) {
-    if (!errors || errors.length === 0) {
-        return <div className="text-sm text-neutral-400 py-8 text-center">{JOB_DETAIL_TEXTS.ERRORS_EMPTY}</div>;
-    }
-    return (
-        <div className="space-y-2">
-            {errors.map((e) => (
-                <div key={e.id} className="bg-danger-50 border border-danger-200 rounded-lg p-3 text-sm">
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="px-2 py-0.5 bg-danger-100 text-danger-700 rounded text-xs font-medium">{e.stage}</span>
-                        <span className="text-xs text-neutral-400">{new Date(e.created_at).toLocaleTimeString()}</span>
-                    </div>
-                    <div className="text-danger-800">{e.error_message}</div>
-                    {e.record_data && <pre className="mt-1 text-xs text-neutral-500 overflow-x-auto">{e.record_data}</pre>}
-                </div>
-            ))}
         </div>
     );
 }

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 // defaultValidator rejects a record if it has no fields at all.
@@ -19,7 +21,7 @@ func defaultValidator(r Record) error {
 // goroutines checks each record with defaultValidator; valid records
 // move on to the next stage, invalid ones are reported as errors (and
 // still counted toward progress) instead of being forwarded.
-func runValidation(ctx context.Context, jobID int, in <-chan Record, workers int, errCh chan<- ProcessError, progressCh chan<- struct{}) <-chan Record {
+func runValidation(ctx context.Context, jobID uuid.UUID, in <-chan Record, workers int, errCh chan<- ProcessError, progressCh chan<- struct{}) <-chan Record {
 	if workers < 1 {
 		workers = 1
 	}

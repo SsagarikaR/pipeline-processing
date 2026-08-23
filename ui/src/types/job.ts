@@ -3,8 +3,10 @@
 
 export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 
+// IDs are UUIDs (backend/migrations/000001_init.up.sql), sent and
+// received as plain strings.
 export interface Job {
-  id: number;
+  id: string;
   status: JobStatus;
   total_records: number;
   processed_records: number;
@@ -16,16 +18,16 @@ export interface Job {
 }
 
 export interface Result {
-  id: number;
-  job_id: number;
+  id: string;
+  job_id: string;
   group_key: string;
   aggregated_value: number;
   created_at: string;
 }
 
 export interface JobError {
-  id: number;
-  job_id: number;
+  id: string;
+  job_id: string;
   record_data: string;
   error_message: string;
   stage: string;
@@ -33,7 +35,7 @@ export interface JobError {
 }
 
 export interface ProgressResponse {
-  jobId: number;
+  jobId: string;
   status: JobStatus;
   processed: number;
   errorCount: number;

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
@@ -60,7 +62,7 @@ type JobSpec struct {
 // pipeline stages, then persisted via JobErrorRepository.Insert once the
 // error collector picks it up.
 type ProcessError struct {
-	JobID     int
+	JobID     uuid.UUID
 	Stage     string
 	Record    *Record
 	Message   string

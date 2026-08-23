@@ -26,7 +26,7 @@ describe('CreateJobModal', () => {
   });
 
   it('renders form and handles submission when open', async () => {
-    vi.mocked(jobService.createJob).mockResolvedValue({ id: 10, status: 'pending' } as any);
+    vi.mocked(jobService.createJob).mockResolvedValue({ id: 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d', status: 'pending' } as any);
     const onClose = vi.fn();
 
     render(

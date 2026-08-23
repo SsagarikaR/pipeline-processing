@@ -25,7 +25,7 @@ export default function JobList() {
   const [error, setError] = useState<string | null>(null);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
-  const [deleteJobId, setDeleteJobId] = useState<number | null>(null);
+  const [deleteJobId, setDeleteJobId] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   /** Fetches the job list from the API and updates loading/error state around it. */
@@ -53,7 +53,7 @@ export default function JobList() {
    * Opens the delete-confirmation modal for a job. Stops the click from
    * also triggering the card's own Link navigation to the job detail page.
    */
-  function promptDelete(id: number, e: React.MouseEvent) {
+  function promptDelete(id: string, e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
     setDeleteJobId(id);

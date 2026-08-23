@@ -11,7 +11,7 @@ definitions:
       export_url:
         type: string
       id:
-        type: integer
+        type: string
       processed_records:
         type: integer
       spec:
@@ -32,9 +32,9 @@ definitions:
       error_message:
         type: string
       id:
-        type: integer
+        type: string
       job_id:
-        type: integer
+        type: string
       record_data:
         type: string
       stage:
@@ -49,9 +49,9 @@ definitions:
       group_key:
         type: string
       id:
-        type: integer
+        type: string
       job_id:
-        type: integer
+        type: string
     type: object
   github_com_SsagarikaR_pipeline-processing_internal_pipeline.AggregationConfig:
     properties:
@@ -171,11 +171,11 @@ paths:
     patch:
       description: Cancel a running pipeline job by ID
       parameters:
-      - description: Job ID
+      - description: Job ID (UUID)
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       responses:
         "204":
           description: No Content
@@ -193,11 +193,11 @@ paths:
       description: Retrieve job errors and failed records for a specific pipeline
         job by ID
       parameters:
-      - description: Job ID
+      - description: Job ID (UUID)
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -220,11 +220,11 @@ paths:
     get:
       description: Get progress and metrics of a specific pipeline job by ID
       parameters:
-      - description: Job ID
+      - description: Job ID (UUID)
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -248,11 +248,11 @@ paths:
     get:
       description: Retrieve results for a specific pipeline job by ID
       parameters:
-      - description: Job ID
+      - description: Job ID (UUID)
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -275,11 +275,11 @@ paths:
     delete:
       description: Delete a specific pipeline job and its artifacts by ID
       parameters:
-      - description: Job ID
+      - description: Job ID (UUID)
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       responses:
         "204":
           description: No Content
@@ -300,11 +300,11 @@ paths:
     get:
       description: Get details of a specific pipeline job by ID
       parameters:
-      - description: Job ID
+      - description: Job ID (UUID)
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:

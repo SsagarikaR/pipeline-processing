@@ -14,6 +14,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type csvIngester struct{}
@@ -183,7 +185,7 @@ func init() {
 // runIngestion is the pipeline's ingest stage: it starts one goroutine
 // per configured source, each reading its own records into a shared
 // channel, and closes that channel once every source has finished.
-func runIngestion(ctx context.Context, jobID int, sources []SourceConfig, errCh chan<- ProcessError) <-chan Record {
+func runIngestion(ctx context.Context, jobID uuid.UUID, sources []SourceConfig, errCh chan<- ProcessError) <-chan Record {
 	recordsCh := make(chan Record, 100)
 	var wg sync.WaitGroup
 

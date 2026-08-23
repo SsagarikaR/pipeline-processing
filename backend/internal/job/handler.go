@@ -6,8 +6,9 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"time"
+
+	"github.com/google/uuid"
 
 	_ "github.com/SsagarikaR/pipeline-processing/internal/models"
 	"github.com/SsagarikaR/pipeline-processing/internal/pipeline"
@@ -59,7 +60,7 @@ func (h *pipelineHandler) CreateJob(w http.ResponseWriter, r *http.Request) {
 // @Summary Get a pipeline job
 // @Description Get details of a specific pipeline job by ID
 // @Produce json
-// @Param id path int true "Job ID"
+// @Param id path string true "Job ID (UUID)"
 // @Success 200 {object} models.Job
 // @Failure 400 {string} string "Bad Request"
 // @Failure 404 {string} string "Not Found"
@@ -109,7 +110,7 @@ func (h *pipelineHandler) GetAllJobs(w http.ResponseWriter, r *http.Request) {
 // DeleteJobs godoc
 // @Summary Delete a pipeline job
 // @Description Delete a specific pipeline job and its artifacts by ID
-// @Param id path int true "Job ID"
+// @Param id path string true "Job ID (UUID)"
 // @Success 204 "No Content"
 // @Failure 400 {string} string "Bad Request"
 // @Failure 404 {string} string "Not Found"
@@ -139,7 +140,7 @@ func (h *pipelineHandler) DeleteJobs(w http.ResponseWriter, r *http.Request) {
 // CancelJob handles PATCH /api/v1/pipelines/:id/cancel
 // @Summary Cancel a pipeline job
 // @Description Cancel a running pipeline job by ID
-// @Param id path int true "Job ID"
+// @Param id path string true "Job ID (UUID)"
 // @Success 204 "No Content"
 // @Failure 400 {string} string "Bad Request"
 // @Failure 409 {string} string "Conflict"
@@ -163,7 +164,7 @@ func (h *pipelineHandler) CancelJob(w http.ResponseWriter, r *http.Request) {
 // @Summary Get pipeline progress
 // @Description Get progress and metrics of a specific pipeline job by ID
 // @Produce json
-// @Param id path int true "Job ID"
+// @Param id path string true "Job ID (UUID)"
 // @Success 200 {object} interface{}
 // @Failure 400 {string} string "Bad Request"
 // @Failure 404 {string} string "Not Found"
@@ -208,7 +209,7 @@ func (h *pipelineHandler) GetProgress(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := struct {
-		JobID           int               `json:"jobId"`
+		JobID           uuid.UUID         `json:"jobId"`
 		Status          string            `json:"status"`
 		Processed       int64             `json:"processed"`
 		ErrorCount      int64             `json:"errorCount"`
@@ -228,7 +229,7 @@ func (h *pipelineHandler) GetProgress(w http.ResponseWriter, r *http.Request) {
 // @Summary Get pipeline results
 // @Description Retrieve results for a specific pipeline job by ID
 // @Produce json
-// @Param id path int true "Job ID"
+// @Param id path string true "Job ID (UUID)"
 // @Success 200 {array} models.Result
 // @Failure 400 {string} string "Bad Request"
 // @Failure 500 {string} string "Internal Server Error"
@@ -255,7 +256,7 @@ func (h *pipelineHandler) GetResults(w http.ResponseWriter, r *http.Request) {
 // @Summary Get pipeline errors
 // @Description Retrieve job errors and failed records for a specific pipeline job by ID
 // @Produce json
-// @Param id path int true "Job ID"
+// @Param id path string true "Job ID (UUID)"
 // @Success 200 {array} models.JobError
 // @Failure 400 {string} string "Bad Request"
 // @Failure 500 {string} string "Internal Server Error"
@@ -278,16 +279,16 @@ func (h *pipelineHandler) GetErrors(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(errs)
 }
 
-// parseID reads the "id" path value from the request and converts it to
-// an int, returning an error if it's missing or not a valid number.
-func parseID(r *http.Request) (int, error) {
+// parseID reads the "id" path value from the request and parses it as a
+// UUID, returning an error if it's missing or not a valid one.
+func parseID(r *http.Request) (uuid.UUID, error) {
 	idStr := r.PathValue("id")
 	if idStr == "" {
-		return 0, errors.New("missing job ID")
+		return uuid.UUID{}, errors.New("missing job ID")
 	}
-	id, err := strconv.Atoi(idStr)
+	id, err := uuid.Parse(idStr)
 	if err != nil {
-		return 0, errors.New("invalid job ID")
+		return uuid.UUID{}, errors.New("invalid job ID")
 	}
 	return id, nil
 }

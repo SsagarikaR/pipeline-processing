@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"strings"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 // runTransform is the pipeline's transform stage. A pool of worker
@@ -12,7 +14,7 @@ import (
 // them in order, and forwards the result. A record that hits an
 // unknown transform or a transform error is dropped (reported via
 // errCh) instead of passed downstream.
-func runTransform(ctx context.Context, jobID int, in <-chan Record, transforms []TransformConfig, workers int, errCh chan<- ProcessError) <-chan Record {
+func runTransform(ctx context.Context, jobID uuid.UUID, in <-chan Record, transforms []TransformConfig, workers int, errCh chan<- ProcessError) <-chan Record {
 	if workers < 1 {
 		workers = 1
 	}
