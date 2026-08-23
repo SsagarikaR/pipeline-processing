@@ -57,7 +57,7 @@ func (s *JobService) startJob(jobID int, spec pipeline.JobSpec) {
 
 	tracker := pipeline.NewTracker(func(e pipeline.ProcessError) {
 		if err := s.errorStore.InsertError(context.Background(), e.ToJobError()); err != nil {
-			fmt.Printf("failed to persist job error: %v\n", err)
+			slog.Error("failed to persist job error", "job_id", jobID, "err", err)
 		}
 	})
 
@@ -67,7 +67,7 @@ func (s *JobService) startJob(jobID int, spec pipeline.JobSpec) {
 	s.mu.Unlock()
 
 	if err := s.store.UpdateStatusAndMetrics(context.Background(), jobID, pipeline.StatusRunning, 0, 0); err != nil {
-		fmt.Printf("failed to mark job running: %v\n", err)
+		slog.Error("failed to mark job running", "job_id", jobID, "err", err)
 	}
 
 	go func() {
@@ -86,7 +86,7 @@ func (s *JobService) startJob(jobID int, spec pipeline.JobSpec) {
 			})
 
 		if err := s.store.UpdateStatusAndMetrics(context.Background(), jobID, status, tracker.Processed(), tracker.Errors()); err != nil {
-			fmt.Printf("failed to update final status: %v\n", err)
+			slog.Error("failed to update final status", "job_id", jobID, "err", err)
 		}
 	}()
 }
