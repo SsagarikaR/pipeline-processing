@@ -3,11 +3,10 @@
 
 export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 
-// IDs are UUIDs (backend/migrations/000001_init.up.sql), sent and
-// received as plain strings.
 export interface Job {
   id: string;
   status: JobStatus;
+  spec: JobSpec;
   total_records: number;
   processed_records: number;
   error_count: number;

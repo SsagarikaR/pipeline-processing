@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { jobService as api } from '../service/jobService';
-import type { Result, JobError } from '../types/job';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import type { Job, Result, JobError } from '../types/job';
+import { ArrowLeft, Download, FileText, RefreshCw, X } from 'lucide-react';
 import StatusBadge from '../components/common/StatusBadge';
 import usePolling from '../hooks/usePolling';
 import AppButton from '../components/common/AppButton';
@@ -12,6 +12,7 @@ import ResultsTable from '../components/jobDetail/ResultsTable';
 import ErrorsTable from '../components/jobDetail/ErrorsTable';
 import { ROUTES, COMMON_LABELS } from '../constants/common';
 import { JOB_DETAIL_TEXTS } from '../constants/jobDetail';
+import { jobTitle } from '../utils/jobTitle';
 
 const TERMINAL_STATUSES = ['completed', 'failed', 'cancelled'] as const;
 
@@ -23,21 +24,32 @@ const TERMINAL_STATUSES = ['completed', 'failed', 'cancelled'] as const;
 export default function JobDetail() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const [job, setJob] = useState<Job | null>(null);
     const [results, setResults] = useState<Result[]>([]);
     const [errors, setErrors] = useState<JobError[]>([]);
     const [tab, setTab] = useState<'progress' | 'results' | 'errors'>('progress');
 
     const [previewData, setPreviewData] = useState<string | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
-    
+
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
 
-    // useParams can technically return undefined if the route param is missing —
+    // useParams can technically return undefined if the route param is missing,
     // guard here so every api.* call below can safely assume `id` is a string.
     if (!id) {
         return <div className="p-8 text-danger-600">{JOB_DETAIL_TEXTS.INVALID_ID}</div>;
     }
+
+    // The job's spec (and the export path derived from it) never changes
+    // once created, so this is a one-time fetch rather than something
+    // polled alongside progress.
+    useEffect(() => {
+        api.getJob(id).then(setJob).catch(() => { });
+    }, [id]);
+
+    const title = job ? jobTitle(job) : JOB_DETAIL_TEXTS.JOB_TITLE;
+    const exportPath = job?.spec?.exports?.[0]?.path;
 
     /**
      * Fetches an exported file and shows it in the preview panel,
@@ -62,6 +74,25 @@ export default function JobDetail() {
         } finally {
             setPreviewLoading(false);
         }
+    }
+
+    /**
+     * Saves the already fetched preview content as a local file. Builds
+     * the download from the in-memory text rather than re-requesting the
+     * URL, so it works regardless of the export bucket's CORS/download
+     * headers, and names the file after the export path the user chose.
+     */
+    function handleDownload() {
+        if (previewData === null) return;
+        const blob = new Blob([previewData], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = exportPath || 'export';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 
     // Polled by usePolling below to keep progress live while the job runs.
@@ -147,7 +178,7 @@ export default function JobDetail() {
             </div>
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                    <h1 className="text-2xl font-semibold text-neutral-900">{JOB_DETAIL_TEXTS.JOB_TITLE_PREFIX}{progress.jobId}</h1>
+                    <h1 className="text-2xl font-semibold text-neutral-900">{title}</h1>
                     <StatusBadge status={progress.status} />
                     <button 
                         onClick={handleManualRefresh} 
@@ -179,17 +210,22 @@ export default function JobDetail() {
                 <MetricCard label="Processed" value={progress.processed} />
                 <MetricCard label="Errors" value={progress.errorCount} tone={progress.errorCount > 0 ? 'red' : 'default'} />
                 <MetricCard label="Percent Complete" value={`${progress.percentComplete.toFixed(1)}%`} />
-                <MetricCard label="Rate" value={progress.recordsPerSec ? `${progress.recordsPerSec.toFixed(1)}/s` : '—'} />
+                <MetricCard label="Rate" value={progress.recordsPerSec ? `${progress.recordsPerSec.toFixed(1)}/s` : '-'} />
             </div>
 
             <div className="text-sm text-neutral-500 mb-6 flex gap-6">
-                <span>{JOB_DETAIL_TEXTS.STARTED}{progress.startedAt ? new Date(progress.startedAt).toLocaleString() : '—'}</span>
-                <span>{JOB_DETAIL_TEXTS.COMPLETED}{progress.completedAt ? new Date(progress.completedAt).toLocaleString() : '—'}</span>
+                <span>{JOB_DETAIL_TEXTS.STARTED}{progress.startedAt ? new Date(progress.startedAt).toLocaleString() : '-'}</span>
+                <span>{JOB_DETAIL_TEXTS.COMPLETED}{progress.completedAt ? new Date(progress.completedAt).toLocaleString() : '-'}</span>
                 {progress.exportUrl && (
-                    <span>
-                        {JOB_DETAIL_TEXTS.EXPORT}<a href={progress.exportUrl} target="_blank" rel="noreferrer" className="text-brand-600 hover:underline">{progress.exportUrl}</a>
-                        <button onClick={(e) => handlePreview(e, progress.exportUrl!)} className="ml-3 text-xs bg-brand-50 text-brand-700 px-2 py-1 rounded hover:bg-brand-100">
-                            {JOB_DETAIL_TEXTS.PREVIEW_BTN}
+                    <span className="flex items-center gap-1.5">
+                        {JOB_DETAIL_TEXTS.EXPORT}
+                        <button
+                            onClick={(e) => handlePreview(e, progress.exportUrl!)}
+                            aria-label={JOB_DETAIL_TEXTS.previewFileAria(exportPath || progress.exportUrl!)}
+                            className="flex items-center gap-1.5 text-brand-600 hover:underline"
+                        >
+                            <FileText size={14} />
+                            {exportPath || progress.exportUrl}
                         </button>
                     </span>
                 )}
@@ -200,7 +236,22 @@ export default function JobDetail() {
                     <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl flex flex-col max-h-[80vh]">
                         <div className="flex items-center justify-between p-4 border-b">
                             <h3 className="font-semibold">{JOB_DETAIL_TEXTS.FILE_PREVIEW}</h3>
-                            <AppButton variant="ghost" size="sm" onClick={() => {setPreviewData(null); setPreviewLoading(false);}}>✕</AppButton>
+                            <div className="flex items-center gap-2">
+                                {!previewLoading && previewData !== null && (
+                                    <AppButton variant="secondary" size="sm" onClick={handleDownload}>
+                                        <Download size={14} className="mr-1.5" />
+                                        {JOB_DETAIL_TEXTS.DOWNLOAD_BTN}
+                                    </AppButton>
+                                )}
+                                <AppButton
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => { setPreviewData(null); setPreviewLoading(false); }}
+                                    aria-label={JOB_DETAIL_TEXTS.CLOSE_PREVIEW_ARIA}
+                                >
+                                    <X size={16} />
+                                </AppButton>
+                            </div>
                         </div>
                         <div className="p-4 overflow-auto bg-neutral-50 flex-1">
                             {previewLoading ? (
@@ -236,17 +287,17 @@ export default function JobDetail() {
             {tab === 'results' && <ResultsTable results={results} isTerminal={isTerminal} />}
             {tab === 'errors' && <ErrorsTable errors={errors} />}
 
-            <ConfirmModal 
+            <ConfirmModal
                 isOpen={deleteModalOpen}
                 title={JOB_DETAIL_TEXTS.DELETE_MODAL_TITLE}
-                message={JOB_DETAIL_TEXTS.DELETE_MODAL_MSG}
+                message={JOB_DETAIL_TEXTS.deleteModalMessage(title)}
                 onConfirm={handleDelete}
                 onCancel={() => setDeleteModalOpen(false)}
             />
-            <ConfirmModal 
+            <ConfirmModal
                 isOpen={cancelModalOpen}
                 title={JOB_DETAIL_TEXTS.CANCEL_MODAL_TITLE}
-                message={JOB_DETAIL_TEXTS.CANCEL_MODAL_MSG}
+                message={JOB_DETAIL_TEXTS.cancelModalMessage(title)}
                 onConfirm={handleCancel}
                 onCancel={() => setCancelModalOpen(false)}
             />

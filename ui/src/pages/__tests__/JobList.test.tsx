@@ -18,6 +18,13 @@ describe('JobList (Integration Test)', () => {
     vi.mocked(jobService.getAllJobs).mockResolvedValue([{
       id: 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d',
       status: 'running',
+      spec: {
+        sources: [{ type: 'csv', path: 'in.csv' }],
+        transforms: [],
+        aggregations: [{ field: 'amount', op: 'sum' }],
+        exports: [{ type: 's3', path: 'results.json' }],
+        concurrency: { validateWorkers: 4, transformWorkers: 4 },
+      },
       total_records: 1000,
       processed_records: 500,
       error_count: 0,
@@ -41,6 +48,7 @@ describe('JobList (Integration Test)', () => {
     await waitFor(() => {
       expect(screen.getByText('running')).toBeInTheDocument();
       expect(screen.getByText('500 processed')).toBeInTheDocument();
+      expect(screen.getByText('results.json')).toBeInTheDocument();
     });
   });
 

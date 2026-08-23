@@ -8,9 +8,10 @@ import AppButton from '../components/common/AppButton';
 import ConfirmModal from '../components/common/ConfirmModal';
 import { ROUTES, COMMON_LABELS } from '../constants/common';
 import { JOB_LIST_TEXTS } from '../constants/jobList';
+import { jobTitle } from '../utils/jobTitle';
 
 // CreateJobModal pulls in react-hook-form/zod, which most visitors never
-// need (they're just here to look at the list) - only download it once
+// need (they're just here to look at the list), only download it once
 // the user actually opens the modal.
 const CreateJobModal = lazy(() => import('../components/jobList/CreateJobModal'));
 
@@ -25,7 +26,7 @@ export default function JobList() {
   const [error, setError] = useState<string | null>(null);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
-  const [deleteJobId, setDeleteJobId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Job | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   /** Fetches the job list from the API and updates loading/error state around it. */
@@ -53,10 +54,10 @@ export default function JobList() {
    * Opens the delete-confirmation modal for a job. Stops the click from
    * also triggering the card's own Link navigation to the job detail page.
    */
-  function promptDelete(id: string, e: React.MouseEvent) {
+  function promptDelete(job: Job, e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    setDeleteJobId(id);
+    setDeleteTarget(job);
   }
 
   /**
@@ -66,12 +67,12 @@ export default function JobList() {
    * failure would just be redundant.
    */
   async function handleDelete() {
-    if (deleteJobId) {
+    if (deleteTarget) {
       try {
-        await api.deleteJob(deleteJobId);
+        await api.deleteJob(deleteTarget.id);
         loadJobs();
       } finally {
-        setDeleteJobId(null);
+        setDeleteTarget(null);
       }
     }
   }
@@ -128,10 +129,10 @@ export default function JobList() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-sm text-neutral-500">#{job.id}</span>
+                  <span className="text-sm font-medium text-neutral-800">{jobTitle(job)}</span>
                   <StatusBadge status={job.status} />
                 </div>
-                <button onClick={(e) => promptDelete(job.id, e)} className="text-xs text-neutral-400 hover:text-danger-600 transition-colors">
+                <button onClick={(e) => promptDelete(job, e)} className="text-xs text-neutral-400 hover:text-danger-600 transition-colors">
                   {COMMON_LABELS.DELETE}
                 </button>
               </div>
@@ -146,11 +147,11 @@ export default function JobList() {
       )}
 
       <ConfirmModal
-        isOpen={deleteJobId !== null}
+        isOpen={deleteTarget !== null}
         title={JOB_LIST_TEXTS.DELETE_MODAL_TITLE}
-        message={deleteJobId ? JOB_LIST_TEXTS.deleteModalMessage(deleteJobId) : ''}
+        message={deleteTarget ? JOB_LIST_TEXTS.deleteModalMessage(jobTitle(deleteTarget)) : ''}
         onConfirm={handleDelete}
-        onCancel={() => setDeleteJobId(null)}
+        onCancel={() => setDeleteTarget(null)}
       />
       {isCreateOpen && (
         <Suspense fallback={null}>
