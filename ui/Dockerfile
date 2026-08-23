@@ -15,14 +15,19 @@ ENV VITE_API_KEY=$VITE_API_KEY
 
 RUN npm run build
 
-FROM node:20-alpin
+# ---- Serve stage ----
+FROM node:20-alpine
+
+RUN npm install -g serve && adduser -D -g '' appuser
 
 WORKDIR /app
-
-RUN npm install -g serve
-
 COPY --from=builder /app/dist ./dist
 
-EXPOSE 80
+USER appuser
 
-ENTRYPOINT ["serve", "-s", "dist", "-l", "80"]
+# Ports below 1024 need root to bind, and appuser deliberately isn't
+# root, so serve listens on 3000 instead of 80 - the host-side port
+# (UI_PORT in docker-compose) is unaffected either way.
+EXPOSE 3000
+
+ENTRYPOINT ["serve", "-s", "dist", "-l", "3000"]

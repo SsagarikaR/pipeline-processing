@@ -43,7 +43,7 @@ services:
     image: pipeline-processing-ui:local
     container_name: pipeline-processing-ui
     ports:
-      - "${UI_PORT:-5173}:80"
+      - "${UI_PORT:-5173}:3000"
     depends_on:
       backend:
         condition: service_healthy
