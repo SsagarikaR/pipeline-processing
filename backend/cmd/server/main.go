@@ -12,8 +12,8 @@ import (
 
 	"github.com/SsagarikaR/pipeline-processing/internal/config"
 	"github.com/SsagarikaR/pipeline-processing/internal/db"
-	"github.com/SsagarikaR/pipeline-processing/pkg/logger"
 	"github.com/SsagarikaR/pipeline-processing/internal/server"
+	"github.com/SsagarikaR/pipeline-processing/pkg/logger"
 )
 
 // @title Pipeline Processing API

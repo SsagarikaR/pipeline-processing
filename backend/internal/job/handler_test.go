@@ -49,7 +49,7 @@ func TestCreateJob_Success(t *testing.T) {
 func TestCreateJob_InvalidSpec(t *testing.T) {
 	h, _, _, _ := setupTestHandler()
 
-	spec := pipeline.JobSpec{} 
+	spec := pipeline.JobSpec{}
 	body, _ := json.Marshal(spec)
 
 	req := httptest.NewRequest(http.MethodPost, "/pipelines", bytes.NewReader(body))

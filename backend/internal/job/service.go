@@ -12,8 +12,6 @@ import (
 
 var ErrInvalidJobType = errors.New("invalid job type")
 
-
-
 func NewJobService(store JobStore, resultStore ResultStore, errorStore ErrorStore) *JobService {
 	return &JobService{
 		store:       store,

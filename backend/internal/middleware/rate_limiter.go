@@ -7,8 +7,6 @@ import (
 	"golang.org/x/time/rate"
 )
 
-
-
 func NewRateLimiter(r rate.Limit, b int) *rateLimiter {
 	rl := &rateLimiter{
 		visitors: make(map[string]*visitor),
@@ -56,7 +54,7 @@ func (rl *rateLimiter) getVisitor(ip string) *rate.Limiter {
 	rl.mu.Lock()
 	v.lastSeen = time.Now()
 	rl.mu.Unlock()
-	
+
 	return v.limiter
 }
 
@@ -69,7 +67,7 @@ func (rl *rateLimiter) Middleware(next http.Handler) http.Handler {
 		if ip == "" {
 			ip = r.RemoteAddr
 		}
-		
+
 		limiter := rl.getVisitor(ip)
 
 		if !limiter.Allow() {

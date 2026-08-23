@@ -13,8 +13,6 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/pipeline"
 )
 
-
-
 func NewPipelineHandler(service *JobService) *pipelineHandler {
 	return &pipelineHandler{service: service}
 }
@@ -32,7 +30,7 @@ func NewPipelineHandler(service *JobService) *pipelineHandler {
 func (h *pipelineHandler) CreateJob(w http.ResponseWriter, r *http.Request) {
 	var spec pipeline.JobSpec
 
-		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 
 	if err := json.NewDecoder(r.Body).Decode(&spec); err != nil {
 		http.Error(w, "failed to parse request: body too large or invalid json", http.StatusBadRequest)

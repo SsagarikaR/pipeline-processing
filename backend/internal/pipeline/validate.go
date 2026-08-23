@@ -40,7 +40,7 @@ func runValidation(ctx context.Context, jobID int, in <-chan Record, workers int
 						case <-ctx.Done():
 							return
 						}
-						
+
 						select {
 						case progressCh <- struct{}{}:
 						case <-ctx.Done():

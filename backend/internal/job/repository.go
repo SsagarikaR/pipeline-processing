@@ -8,10 +8,7 @@ import (
 
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 	"github.com/SsagarikaR/pipeline-processing/internal/pipeline"
-	
 )
-
-
 
 func NewJobStore(db *sql.DB) JobStore {
 	return &postgresJobStore{db: db}
@@ -23,7 +20,7 @@ func (s *postgresJobStore) CreateJob(ctx context.Context, spec json.RawMessage) 
 	    INSERT INTO jobs (status,spec)
 		VALUES ('pending', $1) 
 		RETURNING id, status, spec, total_records, processed_records, error_count, created_at, started_at, completed_at, export_url
-	`,spec).Scan(
+	`, spec).Scan(
 		&job.ID,
 		&job.Status,
 		&job.Spec,
@@ -48,7 +45,7 @@ func (s *postgresJobStore) GetJob(ctx context.Context, jobID int) (models.Job, e
 	    SELECT id, status, spec, total_records, processed_records, error_count, created_at, started_at, completed_at, export_url
 		FROM jobs
 		WHERE id = $1
-	`,jobID).Scan(
+	`, jobID).Scan(
 		&job.ID,
 		&job.Status,
 		&job.Spec,
@@ -102,7 +99,7 @@ func (s *postgresJobStore) GetAllJobs(ctx context.Context) ([]models.Job, error)
 	return jobs, rows.Err()
 }
 
-func (s *postgresJobStore) DeleteJobs(ctx context.Context,jobID int) (error){
+func (s *postgresJobStore) DeleteJobs(ctx context.Context, jobID int) error {
 	result, err := s.db.ExecContext(ctx, `DELETE FROM jobs WHERE id = $1`, jobID)
 	if err != nil {
 		return fmt.Errorf("store delete job %d: %w", jobID, err)
@@ -112,10 +109,10 @@ func (s *postgresJobStore) DeleteJobs(ctx context.Context,jobID int) (error){
 	if err != nil {
 		return fmt.Errorf("store check delete result: %w", err)
 	}
-	if rowsAffected == 0{
+	if rowsAffected == 0 {
 		return sql.ErrNoRows
 	}
-	return  nil
+	return nil
 }
 
 func (s *postgresJobStore) UpdateStatusAndMetrics(ctx context.Context, jobID int, status string, processed int64, errors int64) error {

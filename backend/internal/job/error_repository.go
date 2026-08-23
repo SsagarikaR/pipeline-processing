@@ -8,8 +8,6 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
-
-
 func NewErrorStore(db *sql.DB) ErrorStore { return &postgresErrorStore{db: db} }
 
 func (s *postgresErrorStore) InsertError(ctx context.Context, e models.JobError) error {

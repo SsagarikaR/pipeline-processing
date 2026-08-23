@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
@@ -76,7 +77,7 @@ func groupKeyFor(c AggregationConfig, r Record) string {
 	return base
 }
 
-func buildResults(jobID int,  sums map[string]float64, counts map[string]int) []models.Result {
+func buildResults(jobID int, sums map[string]float64, counts map[string]int) []models.Result {
 	var results []models.Result
 	for key, count := range counts {
 		var val float64
@@ -87,7 +88,7 @@ func buildResults(jobID int,  sums map[string]float64, counts map[string]int) []
 			}
 		case containsOp(key, "count"):
 			val = float64(count)
-		default: 
+		default:
 			val = sums[key]
 		}
 		results = append(results, models.Result{JobID: jobID, GroupKey: key, AggregatedValue: val})

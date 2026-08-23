@@ -5,8 +5,6 @@ import (
 	"os"
 )
 
-
-
 func LoadConfig() *Config {
 	return &Config{
 		Port:       GetEnv("PORT", "8080"),

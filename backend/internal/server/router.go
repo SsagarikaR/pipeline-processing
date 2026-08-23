@@ -4,16 +4,17 @@ import (
 	"database/sql"
 	"net/http"
 
+	httpSwagger "github.com/swaggo/http-swagger/v2"
+
 	_ "github.com/SsagarikaR/pipeline-processing/docs"
 	"github.com/SsagarikaR/pipeline-processing/internal/job"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 func mapRoutes(pool *sql.DB) *http.ServeMux {
 	mux := http.NewServeMux()
 	p := func(path string) string {
-    return "/api/v1" + path
-}
+		return "/api/v1" + path
+	}
 	// Swagger endpoint
 	mux.HandleFunc("GET /swagger/", httpSwagger.WrapHandler)
 
@@ -23,7 +24,6 @@ func mapRoutes(pool *sql.DB) *http.ServeMux {
 	errorStore := job.NewErrorStore(pool)
 	jobService := job.NewJobService(jobStore, resultStore, errorStore)
 	ph := job.NewPipelineHandler(jobService)
-
 
 	// Define Job Endpoints
 	mux.HandleFunc("POST "+p("/pipelines"), ph.CreateJob)

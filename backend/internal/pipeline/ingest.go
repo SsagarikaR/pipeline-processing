@@ -81,14 +81,14 @@ func (jsonIngester) Ingest(ctx context.Context, cfg SourceConfig, out chan<- Rec
 			}
 		}
 	case map[string]any:
-			for _, val := range v {
+		for _, val := range v {
 			if arr, ok := val.([]any); ok {
 				for _, item := range arr {
 					if m, ok := item.(map[string]any); ok {
 						items = append(items, m)
 					}
 				}
-				break 
+				break
 			}
 		}
 		if len(items) == 0 {
@@ -116,7 +116,7 @@ func openSource(path string) (io.Reader, func(), error) {
 		if len(parts) != 2 {
 			return nil, nil, fmt.Errorf("invalid data url format")
 		}
-		
+
 		var r io.Reader
 		if strings.Contains(parts[0], ";base64") {
 			r = base64.NewDecoder(base64.StdEncoding, strings.NewReader(parts[1]))
@@ -158,7 +158,6 @@ func openSource(path string) (io.Reader, func(), error) {
 	}
 	return f, func() { f.Close() }, nil
 }
-
 
 func init() { //init is special function in go it automatically runs when the package loaded before anything else runs
 	RegisterIngester("csv", csvIngester{})

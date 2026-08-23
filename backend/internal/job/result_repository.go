@@ -8,8 +8,6 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
-
-
 func NewResultStore(db *sql.DB) ResultStore { return &postgresResultStore{db: db} }
 
 func (s *postgresResultStore) InsertResults(ctx context.Context, results []models.Result) error {

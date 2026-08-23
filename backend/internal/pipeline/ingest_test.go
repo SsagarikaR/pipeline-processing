@@ -47,7 +47,7 @@ func TestOpenSource_PathTraversalProtection(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, closeFn, err := openSource(tt.path)
-			
+
 			if closeFn != nil {
 				defer closeFn()
 			}

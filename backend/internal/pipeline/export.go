@@ -48,7 +48,7 @@ func runExport(ctx context.Context, jobID int, in <-chan aggOutput, exports []Ex
 				case errCh <- ProcessError{JobID: jobID, Stage: "export", Message: "unknown export type: " + cfg.Type}:
 				case <-ctx.Done():
 				}
-				continue 
+				continue
 			}
 			url, err := exporter.Export(ctx, cfg, out.Records, out.Results)
 			if err != nil {
@@ -68,8 +68,6 @@ func runExport(ctx context.Context, jobID int, in <-chan aggOutput, exports []Ex
 
 	return doneCh
 }
-
-
 
 type s3Exporter struct{}
 
