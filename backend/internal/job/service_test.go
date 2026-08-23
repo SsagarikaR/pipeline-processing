@@ -161,7 +161,7 @@ func TestJobService_CancelJob(t *testing.T) {
 	js := &mockJobStore{Jobs: make(map[uuid.UUID]models.Job)}
 	svc := NewJobService(js, nil, nil)
 
-	// Attempting to cancel non-existent/not-running job
+	// Attempting to cancel a job that doesn't exist at all.
 	err := svc.CancelJob(context.Background(), uuid.New())
 	if err == nil {
 		t.Error("expected error when cancelling non-running job")
@@ -181,6 +181,24 @@ func TestJobService_CancelJob(t *testing.T) {
 
 	if js.Jobs[id].Status != pipeline.StatusCancelled {
 		t.Errorf("expected status cancelled, got %s", js.Jobs[id].Status)
+	}
+}
+
+func TestJobService_CancelJob_AlreadyCompleted(t *testing.T) {
+	id := uuid.New()
+	js := &mockJobStore{Jobs: map[uuid.UUID]models.Job{
+		id: {ID: id, Status: pipeline.StatusCompleted},
+	}}
+	svc := NewJobService(js, nil, nil)
+
+	// No cancelFuncs entry for this job (it already finished), so the
+	// error should name its actual status instead of a generic message.
+	err := svc.CancelJob(context.Background(), id)
+	if err == nil {
+		t.Fatal("expected error when cancelling a completed job")
+	}
+	if want := "job is not running (current status: completed)"; err.Error() != want {
+		t.Errorf("error = %q, want %q", err.Error(), want)
 	}
 }
 

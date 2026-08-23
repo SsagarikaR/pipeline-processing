@@ -119,14 +119,18 @@ func (s *JobService) DeleteJob(ctx context.Context, id uuid.UUID) error {
 }
 
 // CancelJob stops a running job by calling its cancel function. It
-// returns an error if the job isn't currently running (e.g. it already
-// finished, or the ID doesn't exist).
+// returns an error if the job isn't currently running - e.g. it already
+// finished, failed, or was cancelled already - naming its actual current
+// status so the caller knows why.
 func (s *JobService) CancelJob(ctx context.Context, id uuid.UUID) error {
 	s.mu.Lock()
 	cancel, ok := s.cancelFuncs[id]
 	s.mu.Unlock()
 
 	if !ok {
+		if j, err := s.store.GetJob(ctx, id); err == nil {
+			return fmt.Errorf("job is not running (current status: %s)", j.Status)
+		}
 		return errors.New("job is not running")
 	}
 	cancel()
