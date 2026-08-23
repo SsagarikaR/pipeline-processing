@@ -3,6 +3,7 @@ import type { JobSpecFormValues } from '../../schemas/jobSpec';
 import { COMMON_LABELS } from '../../constants/common';
 import { CREATE_JOB_TEXTS } from '../../constants/createJob';
 import AppButton from '../common/AppButton';
+import AppInput from '../common/AppInput';
 
 /**
  * The "Transforms" section of the create-job form: an optional,
@@ -25,20 +26,23 @@ export default function TransformInput() {
           <div className="flex gap-2 items-center">
             <select
               {...register(`transforms.${i}.name`)}
+              aria-label={CREATE_JOB_TEXTS.TRANSFORM_NAME_ARIA}
               className="border border-neutral-300 rounded-lg px-3 py-2 text-sm"
             >
               <option value="uppercase">uppercase</option>
               <option value="lowercase">lowercase</option>
             </select>
 
-            <input
+            <AppInput
               placeholder={CREATE_JOB_TEXTS.TRANSFORM_FIELD_PLACEHOLDER}
+              aria-label={CREATE_JOB_TEXTS.TRANSFORM_FIELD_ARIA}
               {...register(`transforms.${i}.params.field`)}
-              className="flex-1 border border-neutral-300 rounded-lg px-3 py-2 text-sm"
+              className="flex-1"
             />
             <AppButton
               type="button"
               onClick={() => remove(i)}
+              aria-label={CREATE_JOB_TEXTS.REMOVE_TRANSFORM_ARIA}
               className="px-3 text-neutral-400 hover:text-danger-600"
             >
               {COMMON_LABELS.REMOVE}

@@ -12,6 +12,7 @@ import TransformInput from './TransformInput';
 import AggregationInput from './AggregationInput';
 import ExportInput from './ExportInput';
 import AppButton from '../common/AppButton';
+import AppInput from '../common/AppInput';
 import { ROUTES, COMMON_LABELS } from '../../constants/common';
 import { CREATE_JOB_TEXTS } from '../../constants/createJob';
 
@@ -106,28 +107,32 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
               <label className="block text-sm font-medium text-neutral-700 mb-2">{CREATE_JOB_TEXTS.CONCURRENCY_LABEL}</label>
               <div className="flex gap-4">
                 <div>
-                  <span className="text-xs text-neutral-500">
-                    {CREATE_JOB_TEXTS.VALIDATE_WORKERS} <span className="text-danger-600">*</span>
-                  </span>
-                  <input
+                  <AppInput
                     type="number"
                     min={1}
+                    label={
+                      <>
+                        {CREATE_JOB_TEXTS.VALIDATE_WORKERS} <span className="text-danger-600">*</span>
+                      </>
+                    }
                     {...register('concurrency.validateWorkers', { valueAsNumber: true })}
-                    className="block border border-neutral-300 rounded-lg px-3 py-2 text-sm w-24"
+                    className="w-24"
                   />
                   {errors.concurrency?.validateWorkers && (
                     <p className="text-xs text-danger-600 mt-1">{errors.concurrency.validateWorkers.message}</p>
                   )}
                 </div>
                 <div>
-                  <span className="text-xs text-neutral-500">
-                    {CREATE_JOB_TEXTS.TRANSFORM_WORKERS} <span className="text-danger-600">*</span>
-                  </span>
-                  <input
+                  <AppInput
                     type="number"
                     min={1}
+                    label={
+                      <>
+                        {CREATE_JOB_TEXTS.TRANSFORM_WORKERS} <span className="text-danger-600">*</span>
+                      </>
+                    }
                     {...register('concurrency.transformWorkers', { valueAsNumber: true })}
-                    className="block border border-neutral-300 rounded-lg px-3 py-2 text-sm w-24"
+                    className="w-24"
                   />
                   {errors.concurrency?.transformWorkers && (
                     <p className="text-xs text-danger-600 mt-1">{errors.concurrency.transformWorkers.message}</p>

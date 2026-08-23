@@ -3,6 +3,8 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import type { JobSpecFormValues } from '../../schemas/jobSpec';
 import { COMMON_LABELS } from '../../constants/common';
 import { CREATE_JOB_TEXTS, AGGREGATION_FIELD_TYPES, AGGREGATION_OPS_BY_FIELD_TYPE } from '../../constants/createJob';
+import AppButton from '../common/AppButton';
+import AppInput from '../common/AppInput';
 
 /**
  * The "Aggregations" section of the create-job form: a required,
@@ -55,6 +57,7 @@ export default function AggregationInput() {
               <select
                 value={currentType}
                 onChange={(e) => handleTypeChange(field.id, i, e.target.value)}
+                aria-label={CREATE_JOB_TEXTS.AGGREGATION_FIELD_TYPE_ARIA}
                 className="border border-neutral-300 rounded-lg px-3 py-2 text-sm w-32"
               >
                 {AGGREGATION_FIELD_TYPES.map((t) => (
@@ -65,6 +68,7 @@ export default function AggregationInput() {
               </select>
               <select
                 {...register(`aggregations.${i}.op`)}
+                aria-label={CREATE_JOB_TEXTS.AGGREGATION_OP_ARIA}
                 className="border border-neutral-300 rounded-lg px-3 py-2 text-sm w-28"
               >
                 {availableOps.map((op) => (
@@ -73,32 +77,39 @@ export default function AggregationInput() {
                   </option>
                 ))}
               </select>
-              <input
+              <AppInput
                 placeholder={CREATE_JOB_TEXTS.AGGREGATION_FIELD_PLACEHOLDER}
+                aria-label={CREATE_JOB_TEXTS.AGGREGATION_FIELD_ARIA}
                 {...register(`aggregations.${i}.field`)}
-                className="border border-neutral-300 rounded-lg px-3 py-2 text-sm w-32"
+                className="w-32"
               />
-              <input
+              <AppInput
                 placeholder={CREATE_JOB_TEXTS.AGGREGATION_GROUP_BY_PLACEHOLDER}
+                aria-label={CREATE_JOB_TEXTS.AGGREGATION_GROUP_BY_ARIA}
                 {...register(`aggregations.${i}.groupBy`)}
-                className="flex-1 border border-neutral-300 rounded-lg px-3 py-2 text-sm"
+                className="flex-1"
               />
-              <button type="button" onClick={() => remove(i)} className="px-3 text-neutral-400 hover:text-danger-600">
+              <AppButton
+                type="button"
+                onClick={() => remove(i)}
+                aria-label={CREATE_JOB_TEXTS.REMOVE_AGGREGATION_ARIA}
+                className="px-3 text-neutral-400 hover:text-danger-600"
+              >
                 {COMMON_LABELS.REMOVE}
-              </button>
+              </AppButton>
             </div>
             {fieldError && <p className="text-xs text-danger-600 mt-1">{fieldError}</p>}
           </div>
         );
       })}
       {errors.aggregations?.message && <p className="text-xs text-danger-600">{errors.aggregations.message}</p>}
-      <button
+      <AppButton
         type="button"
         onClick={() => append({ field: '', op: 'sum', groupBy: '' })}
         className="text-sm text-brand-600 hover:text-brand-700 font-medium"
       >
         {CREATE_JOB_TEXTS.ADD_AGGREGATION}
-      </button>
+      </AppButton>
     </div>
   );
 }

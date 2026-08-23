@@ -3,6 +3,7 @@ import type { JobSpecFormValues } from '../../schemas/jobSpec';
 import { COMMON_LABELS } from '../../constants/common';
 import { CREATE_JOB_TEXTS } from '../../constants/createJob';
 import AppButton from '../common/AppButton';
+import AppInput from '../common/AppInput';
 
 /**
  * The "Exports" section of the create-job form: a required, repeatable
@@ -25,14 +26,16 @@ export default function ExportInput() {
       {fields.map((field, i) => (
         <div key={field.id}>
           <div className="flex gap-2 items-center">
-            <input
+            <AppInput
               placeholder={CREATE_JOB_TEXTS.EXPORT_PATH_PLACEHOLDER}
+              aria-label={CREATE_JOB_TEXTS.EXPORT_PATH_ARIA}
               {...register(`exports.${i}.path`)}
-              className="flex-1 border border-neutral-300 rounded-lg px-3 py-2 text-sm"
+              className="flex-1"
             />
             <AppButton
               type="button"
               onClick={() => remove(i)}
+              aria-label={CREATE_JOB_TEXTS.REMOVE_EXPORT_ARIA}
               className="px-3 text-neutral-400 hover:text-danger-600"
             >
               {COMMON_LABELS.REMOVE}
