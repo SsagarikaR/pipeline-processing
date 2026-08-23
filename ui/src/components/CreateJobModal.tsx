@@ -1,9 +1,12 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FormProvider, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
 import { jobService as api } from '../service/jobService';
 import type { JobSpec } from '../types/job';
 import type { CreateJobModalProps } from '../types/common';
+import { jobSpecSchema, type JobSpecFormValues } from '../schemas/jobSpec';
 import SourceInput from './SourceInput';
 import TransformInput from './TransformInput';
 import AggregationInput from './AggregationInput';
@@ -12,7 +15,7 @@ import AppButton from './AppButton';
 import { ROUTES } from '../constants/common';
 import { CREATE_JOB_TEXTS } from '../constants/createJob';
 
-const EMPTY_SPEC: JobSpec = {
+const EMPTY_SPEC: JobSpecFormValues = {
   sources: [{ type: 'csv', path: '' }],
   transforms: [],
   aggregations: [{ field: '', op: 'sum', groupBy: '' }],
@@ -21,23 +24,30 @@ const EMPTY_SPEC: JobSpec = {
 };
 
 export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps) {
-  const [spec, setSpec] = useState<JobSpec>(EMPTY_SPEC);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const form = useForm<JobSpecFormValues>({
+    resolver: zodResolver(jobSpecSchema),
+    defaultValues: EMPTY_SPEC,
+  });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = form;
 
   if (!isOpen) return null;
 
   function handleClose() {
-    setSpec(EMPTY_SPEC);
-    setError(null);
+    reset(EMPTY_SPEC);
+    setSubmitError(null);
     onClose();
   }
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setSubmitting(true);
-    setError(null);
+  const onSubmit = handleSubmit(async (spec) => {
+    setSubmitError(null);
     try {
       const cleanSpec: JobSpec = {
         ...spec,
@@ -48,15 +58,13 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
         })),
       };
       const job = await api.createJob(cleanSpec);
-      setSpec(EMPTY_SPEC);
+      reset(EMPTY_SPEC);
       onClose();
       navigate(ROUTES.jobDetail(job.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : CREATE_JOB_TEXTS.CREATE_ERROR);
-    } finally {
-      setSubmitting(false);
+      setSubmitError(err instanceof Error ? err.message : CREATE_JOB_TEXTS.CREATE_ERROR);
     }
-  }
+  });
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]">
@@ -72,64 +80,61 @@ export default function CreateJobModal({ isOpen, onClose }: CreateJobModalProps)
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <SourceInput sources={spec.sources} onChange={(sources) => setSpec({ ...spec, sources })} />
-          <TransformInput transforms={spec.transforms} onChange={(transforms) => setSpec({ ...spec, transforms })} />
-          <AggregationInput
-            aggregations={spec.aggregations}
-            onChange={(aggregations) => setSpec({ ...spec, aggregations })}
-          />
-          <ExportInput exports={spec.exports} onChange={(exports) => setSpec({ ...spec, exports })} />
+        <FormProvider {...form}>
+          <form onSubmit={onSubmit} className="space-y-6" noValidate>
+            <SourceInput />
+            <TransformInput />
+            <AggregationInput />
+            <ExportInput />
 
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">{CREATE_JOB_TEXTS.CONCURRENCY_LABEL}</label>
-            <div className="flex gap-4">
-              <div>
-                <span className="text-xs text-neutral-500">{CREATE_JOB_TEXTS.VALIDATE_WORKERS}</span>
-                <input
-                  type="number"
-                  min={1}
-                  value={spec.concurrency.validateWorkers}
-                  onChange={(e) =>
-                    setSpec({
-                      ...spec,
-                      concurrency: { ...spec.concurrency, validateWorkers: Number(e.target.value) },
-                    })
-                  }
-                  className="block border border-neutral-300 rounded-lg px-3 py-2 text-sm w-24"
-                />
-              </div>
-              <div>
-                <span className="text-xs text-neutral-500">{CREATE_JOB_TEXTS.TRANSFORM_WORKERS}</span>
-                <input
-                  type="number"
-                  min={1}
-                  value={spec.concurrency.transformWorkers}
-                  onChange={(e) =>
-                    setSpec({
-                      ...spec,
-                      concurrency: { ...spec.concurrency, transformWorkers: Number(e.target.value) },
-                    })
-                  }
-                  className="block border border-neutral-300 rounded-lg px-3 py-2 text-sm w-24"
-                />
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">{CREATE_JOB_TEXTS.CONCURRENCY_LABEL}</label>
+              <div className="flex gap-4">
+                <div>
+                  <span className="text-xs text-neutral-500">
+                    {CREATE_JOB_TEXTS.VALIDATE_WORKERS} <span className="text-danger-600">*</span>
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    {...register('concurrency.validateWorkers', { valueAsNumber: true })}
+                    className="block border border-neutral-300 rounded-lg px-3 py-2 text-sm w-24"
+                  />
+                  {errors.concurrency?.validateWorkers && (
+                    <p className="text-xs text-danger-600 mt-1">{errors.concurrency.validateWorkers.message}</p>
+                  )}
+                </div>
+                <div>
+                  <span className="text-xs text-neutral-500">
+                    {CREATE_JOB_TEXTS.TRANSFORM_WORKERS} <span className="text-danger-600">*</span>
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    {...register('concurrency.transformWorkers', { valueAsNumber: true })}
+                    className="block border border-neutral-300 rounded-lg px-3 py-2 text-sm w-24"
+                  />
+                  {errors.concurrency?.transformWorkers && (
+                    <p className="text-xs text-danger-600 mt-1">{errors.concurrency.transformWorkers.message}</p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          {error && (
-            <div className="text-sm text-danger-600 bg-danger-50 border border-danger-200 rounded-lg p-3">{error}</div>
-          )}
+            {submitError && (
+              <div className="text-sm text-danger-600 bg-danger-50 border border-danger-200 rounded-lg p-3">{submitError}</div>
+            )}
 
-          <div className="flex justify-end gap-3">
-            <AppButton type="button" variant="secondary" onClick={handleClose}>
-              Cancel
-            </AppButton>
-            <AppButton type="submit" disabled={submitting} size="lg">
-              {submitting ? CREATE_JOB_TEXTS.BTN_CREATING : CREATE_JOB_TEXTS.BTN_CREATE}
-            </AppButton>
-          </div>
-        </form>
+            <div className="flex justify-end gap-3">
+              <AppButton type="button" variant="secondary" onClick={handleClose}>
+                Cancel
+              </AppButton>
+              <AppButton type="submit" disabled={isSubmitting} size="lg">
+                {isSubmitting ? CREATE_JOB_TEXTS.BTN_CREATING : CREATE_JOB_TEXTS.BTN_CREATE}
+              </AppButton>
+            </div>
+          </form>
+        </FormProvider>
       </div>
     </div>
   );

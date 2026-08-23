@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import CreateJobModal from '../CreateJobModal';
 import { jobService } from '../../service/jobService';
@@ -11,6 +11,10 @@ vi.mock('../../service/jobService', () => ({
 }));
 
 describe('CreateJobModal', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('renders nothing when closed', () => {
     render(
       <BrowserRouter>
@@ -33,13 +37,31 @@ describe('CreateJobModal', () => {
 
     expect(screen.getByText('New Pipeline Job')).toBeInTheDocument();
 
-    const submitBtn = screen.getByText('Create Job');
-    fireEvent.click(submitBtn);
+    fireEvent.change(screen.getByPlaceholderText('/path/to/file or Data URI'), { target: { value: 'in.csv' } });
+    fireEvent.change(screen.getByPlaceholderText('field'), { target: { value: 'amount' } });
+    fireEvent.change(screen.getByPlaceholderText('e.g., results.json'), { target: { value: 'out.json' } });
+
+    fireEvent.click(screen.getByText('Create Job'));
 
     await waitFor(() => {
       expect(jobService.createJob).toHaveBeenCalledTimes(1);
       expect(onClose).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('blocks submission and shows field errors when required fields are empty', async () => {
+    render(
+      <BrowserRouter>
+        <CreateJobModal isOpen={true} onClose={vi.fn()} />
+      </BrowserRouter>
+    );
+
+    fireEvent.click(screen.getByText('Create Job'));
+
+    // Both the source and export sections are empty by default, so this
+    // message appears more than once.
+    expect((await screen.findAllByText('Path is required')).length).toBeGreaterThan(0);
+    expect(jobService.createJob).not.toHaveBeenCalled();
   });
 
   it('calls onClose when cancel is clicked', () => {

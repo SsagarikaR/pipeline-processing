@@ -1,5 +1,6 @@
-import { createServer, type Server } from 'node:http';
-import type { AddressInfo } from 'node:net';
+/// <reference types="node" />
+import { createServer, type Server } from 'http';
+import type { AddressInfo } from 'net';
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import toast from 'react-hot-toast';
 import axiosInstance from '../axios';

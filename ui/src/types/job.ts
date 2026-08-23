@@ -60,7 +60,7 @@ export interface TransformConfig {
   params: Record<string, string>;
 }
 
-export type AggregationOp = 'sum' | 'avg' | 'count';
+export type AggregationOp = 'sum' | 'avg' | 'count' | 'min' | 'max';
 
 export interface AggregationConfig {
   field: string;
@@ -88,22 +88,3 @@ export interface JobSpec {
   concurrency: ConcurrencyConfig;
 }
 
-export interface SourceInputProps {
-  sources: SourceConfig[];
-  onChange: (sources: SourceConfig[]) => void;
-}
-
-export interface TransformInputProps {
-  transforms: TransformConfig[];
-  onChange: (transforms: TransformConfig[]) => void;
-}
-
-export interface AggregationInputProps {
-  aggregations: AggregationConfig[];
-  onChange: (aggs: AggregationConfig[]) => void;
-}
-
-export interface ExportInputProps {
-  exports: ExportConfig[];
-  onChange: (exps: ExportConfig[]) => void;
-}
