@@ -99,20 +99,35 @@ export default function JobDetail() {
         fetchErrors();
     }
 
-    /** Cancels the job the confirmation modal is open for. */
+    /**
+     * Cancels the job the confirmation modal is open for. The modal
+     * always closes, success or failure - the axios interceptor already
+     * toasts the error (e.g. a completed job can't be cancelled), so
+     * leaving the modal stuck open on failure would just be redundant.
+     */
     async function handleCancel() {
         if (id) {
-            await api.cancelJob(id);
-            setCancelModalOpen(false);
+            try {
+                await api.cancelJob(id);
+            } finally {
+                setCancelModalOpen(false);
+            }
         }
     }
 
-    /** Deletes the job the confirmation modal is open for and returns to the job list. */
+    /**
+     * Deletes the job the confirmation modal is open for and returns to
+     * the job list. Only navigates away on success; the modal still
+     * closes either way so it doesn't hang around after a failed delete.
+     */
     async function handleDelete() {
         if (id) {
-            await api.deleteJob(id);
-            setDeleteModalOpen(false);
-            navigate(ROUTES.HOME);
+            try {
+                await api.deleteJob(id);
+                navigate(ROUTES.HOME);
+            } finally {
+                setDeleteModalOpen(false);
+            }
         }
     }
 

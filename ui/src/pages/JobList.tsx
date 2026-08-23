@@ -59,12 +59,20 @@ export default function JobList() {
     setDeleteJobId(id);
   }
 
-  /** Deletes the job the confirmation modal is open for, then refreshes the list. */
+  /**
+   * Deletes the job the confirmation modal is open for, then refreshes
+   * the list. The modal always closes, success or failure - the axios
+   * interceptor already toasts the error, so leaving it stuck open on
+   * failure would just be redundant.
+   */
   async function handleDelete() {
     if (deleteJobId) {
-      await api.deleteJob(deleteJobId);
-      setDeleteJobId(null);
-      loadJobs();
+      try {
+        await api.deleteJob(deleteJobId);
+        loadJobs();
+      } finally {
+        setDeleteJobId(null);
+      }
     }
   }
 
