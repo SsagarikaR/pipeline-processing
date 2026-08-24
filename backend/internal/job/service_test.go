@@ -63,7 +63,7 @@ func (m *mockJobStore) GetJob(ctx context.Context, id uuid.UUID) (models.Job, er
 	return j, nil
 }
 
-func (m *mockJobStore) GetAllJobs(ctx context.Context) ([]models.Job, error) {
+func (m *mockJobStore) GetAllJobs(ctx context.Context, limit, offset int) ([]models.Job, error) {
 	var list []models.Job
 	for _, j := range m.Jobs {
 		list = append(list, j)
@@ -102,7 +102,7 @@ func (m *mockResultStore) InsertResults(ctx context.Context, results []models.Re
 	return nil
 }
 
-func (m *mockResultStore) GetResultsByJob(ctx context.Context, id uuid.UUID) ([]models.Result, error) {
+func (m *mockResultStore) GetResultsByJob(ctx context.Context, id uuid.UUID, limit, offset int) ([]models.Result, error) {
 	return m.Results[id], nil
 }
 
@@ -115,7 +115,7 @@ func (m *mockErrorStore) InsertError(ctx context.Context, err models.JobError) e
 	return nil
 }
 
-func (m *mockErrorStore) GetErrorsByJob(ctx context.Context, id uuid.UUID) ([]models.JobError, error) {
+func (m *mockErrorStore) GetErrorsByJob(ctx context.Context, id uuid.UUID, limit, offset int) ([]models.JobError, error) {
 	return m.Errors[id], nil
 }
 
@@ -237,7 +237,7 @@ func TestJobService_GetAllJobs(t *testing.T) {
 		id2: {ID: id2},
 	}}
 	svc := NewJobService(js, nil, nil)
-	jobs, err := svc.GetAllJobs(context.Background())
+	jobs, err := svc.GetAllJobs(context.Background(), 100, 0)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -252,7 +252,7 @@ func TestJobService_GetResults(t *testing.T) {
 		id: {{JobID: id, GroupKey: "total", AggregatedValue: 100}},
 	}}
 	svc := NewJobService(nil, rs, nil)
-	res, err := svc.GetResults(context.Background(), id)
+	res, err := svc.GetResults(context.Background(), id, 100, 0)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -267,7 +267,7 @@ func TestJobService_GetErrors(t *testing.T) {
 		id: {{JobID: id, ErrorMessage: "test error"}},
 	}}
 	svc := NewJobService(nil, nil, es)
-	errs, err := svc.GetErrors(context.Background(), id)
+	errs, err := svc.GetErrors(context.Background(), id, 100, 0)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

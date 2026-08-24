@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -96,7 +97,8 @@ func (h *pipelineHandler) GetJob(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Internal Server Error"
 // @Router /api/v1/pipelines [get]
 func (h *pipelineHandler) GetAllJobs(w http.ResponseWriter, r *http.Request) {
-	jobs, err := h.service.GetAllJobs(r.Context())
+	limit, offset := parsePagination(r, 50)
+	jobs, err := h.service.GetAllJobs(r.Context(), limit, offset)
 	if err != nil {
 		slog.Error("failed to get all jobs", "err", err)
 		http.Error(w, "failed to get all jobs", http.StatusInternalServerError)
@@ -241,7 +243,8 @@ func (h *pipelineHandler) GetResults(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results, err := h.service.GetResults(r.Context(), id)
+	limit, offset := parsePagination(r, 50)
+	results, err := h.service.GetResults(r.Context(), id, limit, offset)
 	if err != nil {
 		slog.Error("failed to get results", "err", err)
 		http.Error(w, "failed to get results", http.StatusInternalServerError)
@@ -268,7 +271,8 @@ func (h *pipelineHandler) GetErrors(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	errs, err := h.service.GetErrors(r.Context(), id)
+	limit, offset := parsePagination(r, 50)
+	errs, err := h.service.GetErrors(r.Context(), id, limit, offset)
 	if err != nil {
 		slog.Error("failed to get errors", "err", err)
 		http.Error(w, "failed to get errors", http.StatusInternalServerError)
@@ -291,4 +295,22 @@ func parseID(r *http.Request) (uuid.UUID, error) {
 		return uuid.UUID{}, errors.New("invalid job ID")
 	}
 	return id, nil
+}
+
+// parsePagination extracts limit and offset from the query string,
+// providing a safe default limit.
+func parsePagination(r *http.Request, defaultLimit int) (int, int) {
+	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
+
+	limit := defaultLimit
+	if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+		limit = l
+	}
+
+	offset := 0
+	if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
+		offset = o
+	}
+	return limit, offset
 }

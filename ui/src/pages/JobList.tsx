@@ -1,6 +1,6 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { RefreshCw, WifiOff } from 'lucide-react';
+import { RefreshCw, WifiOff, ChevronLeft, ChevronRight } from 'lucide-react';
 import { jobService as api } from '../service/jobService';
 import type { Job } from '../types/job';
 import StatusBadge from '../components/common/StatusBadge';
@@ -25,12 +25,17 @@ export default function JobList() {
   const [deleteTarget, setDeleteTarget] = useState<Job | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
+  const [page, setPage] = useState(0);
+  const pageSize = 50;
+  const [hasMore, setHasMore] = useState(true);
+
   /** Fetches the job list from the API and updates loading/error state around it. */
-  async function loadJobs() {
+  const loadJobs = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await api.getAllJobs();
+      const data = await api.getAllJobs(pageSize, page * pageSize);
       setJobs(data ?? []);
+      setHasMore((data ?? []).length === pageSize);
       setLastFetched(new Date());
       setError(null);
     } catch {
@@ -38,13 +43,13 @@ export default function JobList() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [page]);
 
   useEffect(() => {
     loadJobs();
     const interval = setInterval(loadJobs, 15 * 60 * 1000); // 15 minutes
     return () => clearInterval(interval);
-  }, []);
+  }, [loadJobs]);
 
   /**
    * Opens the delete-confirmation modal for a job. Stops the click from
@@ -128,9 +133,9 @@ export default function JobList() {
                   <span className="text-sm font-medium text-neutral-800">{jobTitle(job)}</span>
                   <StatusBadge status={job.status} />
                 </div>
-                <button onClick={(e) => promptDelete(job, e)} className="text-xs text-neutral-400 hover:text-danger-600 transition-colors">
+                <AppButton onClick={(e) => promptDelete(job, e)} className="text-xs text-neutral-400 hover:text-danger-600 transition-colors">
                   {COMMON_LABELS.DELETE}
-                </button>
+                </AppButton>
               </div>
               <div className="mt-2 flex gap-6 text-sm text-neutral-500">
                 <span>{job.processed_records} {JOB_LIST_TEXTS.PROCESSED}</span>
@@ -139,6 +144,26 @@ export default function JobList() {
               </div>
             </Link>
           ))}
+          
+          <div className="flex items-center justify-between pt-4 mt-6 border-t border-neutral-100">
+            <AppButton 
+              variant="secondary" 
+              size="sm"
+              onClick={() => setPage(p => Math.max(0, p - 1))} 
+              disabled={page === 0 || loading}
+            >
+              <ChevronLeft size={16} className="mr-1" /> Previous
+            </AppButton>
+            <span className="text-sm font-medium text-neutral-500">Page {page + 1}</span>
+            <AppButton 
+              variant="secondary" 
+              size="sm"
+              onClick={() => setPage(p => p + 1)} 
+              disabled={!hasMore || loading}
+            >
+              Next <ChevronRight size={16} className="ml-1" />
+            </AppButton>
+          </div>
         </div>
       )}
 

@@ -27,9 +27,9 @@ func (s *postgresResultStore) InsertResults(ctx context.Context, results []model
 }
 
 // GetResultsByJob returns all the aggregated results for a job.
-func (s *postgresResultStore) GetResultsByJob(ctx context.Context, jobID uuid.UUID) ([]models.Result, error) {
+func (s *postgresResultStore) GetResultsByJob(ctx context.Context, jobID uuid.UUID, limit, offset int) ([]models.Result, error) {
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, job_id, group_key, aggregated_value, created_at FROM job_results WHERE job_id = $1`, jobID)
+		`SELECT id, job_id, group_key, aggregated_value, created_at FROM job_results WHERE job_id = $1 ORDER BY created_at LIMIT $2 OFFSET $3`, jobID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("store: get results: %w", err)
 	}

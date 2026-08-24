@@ -71,13 +71,13 @@ func (s *postgresJobStore) GetJob(ctx context.Context, jobID uuid.UUID) (models.
 }
 
 // GetAllJobs returns every job row in the table.
-func (s *postgresJobStore) GetAllJobs(ctx context.Context) ([]models.Job, error) {
+func (s *postgresJobStore) GetAllJobs(ctx context.Context, limit, offset int) ([]models.Job, error) {
 	var jobs []models.Job
 	rows, err := s.db.QueryContext(ctx, `
 	    SELECT id, status, spec, total_records, processed_records, 
 	    error_count, created_at, started_at, completed_at, export_url
-		FROM jobs
-	`)
+		FROM jobs ORDER BY created_at DESC LIMIT $1 OFFSET $2
+	`, limit, offset)
 
 	if err != nil {
 		return jobs, fmt.Errorf("store: failed to get all jobs: %w", err)
