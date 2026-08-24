@@ -21,7 +21,7 @@ func TestOpenSource_PathTraversalProtection(t *testing.T) {
 		{
 			name:        "Valid path inside sandbox",
 			path:        "/data/inputs/my_file.csv",
-			expectError: true, // It will error because file doesn't actually exist, but NOT a traversal error
+			expectError: true,
 			errorMsg:    "no such file or directory",
 		},
 		{
@@ -55,13 +55,8 @@ func TestOpenSource_PathTraversalProtection(t *testing.T) {
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("expected error, got nil")
-				} else {
-					// We just want to check if the error contains the expected message,
-					// or for the "no such file" we just ensure it didn't fail the traversal check.
-					// Since os.Open on a non-existent file returns a PathError, we check the suffix.
-					if !containsErrStr(err.Error(), tt.errorMsg) {
-						t.Errorf("expected error to contain %q, got: %v", tt.errorMsg, err)
-					}
+				} else if !containsErrStr(err.Error(), tt.errorMsg) {
+					t.Errorf("expected error to contain %q, got: %v", tt.errorMsg, err)
 				}
 			} else {
 				if err != nil {
@@ -73,7 +68,6 @@ func TestOpenSource_PathTraversalProtection(t *testing.T) {
 }
 
 func containsErrStr(actual, expected string) bool {
-	// Simple helper to check if expected substring is in actual error string
 	return len(actual) >= len(expected) && (actual[len(actual)-len(expected):] == expected || contains(actual, expected))
 }
 

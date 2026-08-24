@@ -53,7 +53,7 @@ func (h *pipelineHandler) CreateJob(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(newJob)
+	_ = json.NewEncoder(w).Encode(newJob)
 }
 
 // GetJob godoc
@@ -85,7 +85,7 @@ func (h *pipelineHandler) GetJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(j)
+	_ = json.NewEncoder(w).Encode(j)
 }
 
 // GetAllJobs godoc
@@ -104,7 +104,7 @@ func (h *pipelineHandler) GetAllJobs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(jobs)
+	_ = json.NewEncoder(w).Encode(jobs)
 }
 
 // DeleteJobs godoc
@@ -222,7 +222,7 @@ func (h *pipelineHandler) GetProgress(w http.ResponseWriter, r *http.Request) {
 	}{j.ID, j.Status, processed, errCount, percent, rate, latencies, j.StartedAt, j.CompletedAt, j.ExportURL}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	_ = json.NewEncoder(w).Encode(resp)
 }
 
 // GetResults handles GET /api/v1/pipelines/:id/results
@@ -249,7 +249,7 @@ func (h *pipelineHandler) GetResults(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(results)
+	_ = json.NewEncoder(w).Encode(results)
 }
 
 // GetErrors handles GET /api/v1/pipelines/:id/errors
@@ -276,7 +276,7 @@ func (h *pipelineHandler) GetErrors(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(errs)
+	_ = json.NewEncoder(w).Encode(errs)
 }
 
 // parseID reads the "id" path value from the request and parses it as a

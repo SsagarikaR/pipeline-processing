@@ -33,7 +33,7 @@ func (s *postgresResultStore) GetResultsByJob(ctx context.Context, jobID uuid.UU
 	if err != nil {
 		return nil, fmt.Errorf("store: get results: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []models.Result
 	for rows.Next() {

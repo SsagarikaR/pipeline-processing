@@ -32,7 +32,7 @@ func (s *postgresErrorStore) GetErrorsByJob(ctx context.Context, jobID uuid.UUID
 	if err != nil {
 		return nil, fmt.Errorf("store: get errors: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []models.JobError
 	for rows.Next() {

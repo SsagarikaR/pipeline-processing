@@ -45,7 +45,7 @@ func TestAPIKeyMiddleware(t *testing.T) {
 }
 
 func TestAPIKeyMiddleware_DefaultKey(t *testing.T) {
-	os.Unsetenv("API_KEY")
+	_ = os.Unsetenv("API_KEY")
 
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

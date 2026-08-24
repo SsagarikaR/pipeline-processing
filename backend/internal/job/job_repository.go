@@ -82,7 +82,7 @@ func (s *postgresJobStore) GetAllJobs(ctx context.Context) ([]models.Job, error)
 	if err != nil {
 		return jobs, fmt.Errorf("store: failed to get all jobs: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	for rows.Next() {
 		var job models.Job

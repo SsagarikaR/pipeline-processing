@@ -9,10 +9,6 @@ import ConfirmModal from '../components/common/ConfirmModal';
 import { ROUTES, COMMON_LABELS } from '../constants/common';
 import { JOB_LIST_TEXTS } from '../constants/jobList';
 import { jobTitle } from '../utils/jobTitle';
-
-// CreateJobModal pulls in react-hook-form/zod, which most visitors never
-// need (they're just here to look at the list), only download it once
-// the user actually opens the modal.
 const CreateJobModal = lazy(() => import('../components/jobList/CreateJobModal'));
 
 /**

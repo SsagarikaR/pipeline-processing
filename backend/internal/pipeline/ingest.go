@@ -144,19 +144,22 @@ func openSource(path string) (io.Reader, func(), error) {
 		var err error
 		// Implement retry logic with exponential backoff for network resilience
 		for i := 0; i < 3; i++ {
-			resp, err = http.Get(path)
-			if err == nil && resp.StatusCode == 200 {
-				break
+			resp, err = http.Get(path) //nolint:bodyclose
+			if err == nil {
+				if resp.StatusCode == 200 {
+					return resp.Body, func() { _ = resp.Body.Close() }, nil
+				}
+				_ = resp.Body.Close()
 			}
 			time.Sleep(time.Duration(1<<i) * time.Second)
 		}
 		if err != nil {
 			return nil, nil, fmt.Errorf("fetch %s: %w", path, err)
 		}
-		if resp.StatusCode != 200 {
+		if resp != nil {
 			return nil, nil, fmt.Errorf("fetch %s: bad status %d", path, resp.StatusCode)
 		}
-		return resp.Body, func() { resp.Body.Close() }, nil
+		return nil, nil, fmt.Errorf("fetch %s: failed", path)
 	}
 	// Path traversal protection: Clean path and enforce sandbox
 	if strings.Contains(path, "..") {
@@ -170,7 +173,7 @@ func openSource(path string) (io.Reader, func(), error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("open %s: %w", path, err)
 	}
-	return f, func() { f.Close() }, nil
+	return f, func() { _ = f.Close() }, nil
 }
 
 // init registers the built-in ingesters (csv, json, api) so they're
