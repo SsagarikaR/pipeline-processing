@@ -1,6 +1,18 @@
 # Backend
 
-Go API for the pipeline app. Plain `net/http` (no router library), Postgres via `lib/pq`, S3 via the AWS SDK (points at LocalStack for local dev).
+Go API for the pipeline app. Plain `net/http` (no router library) and Postgres via `lib/pq`.
+
+## Functionality
+
+This backend powers a highly concurrent, streaming data processing pipeline. Its core capabilities include:
+- **Data Ingestion:** Reads data from various sources (CSV, JSON, APIs, data URIs) simultaneously.
+- **Validation:** Ensures data integrity by filtering out empty or invalid records on the fly.
+- **Transformation:** Mutates data (e.g., lowercase, uppercase) in real-time as it flows through the system.
+- **Aggregation:** Groups and computes metrics (Sum, Average, Count) across millions of records efficiently.
+- **Exporting:** Saves the final aggregated results and raw records to external storage.
+- **Real-Time Tracking:** Provides live progress updates (processed counts, error counts) via polling.
+
+The pipeline is built on a "streaming" architecture. Records are passed between stages one-by-one via Go channels, meaning massive datasets can be processed with a very small memory footprint.
 
 ## Running it
 
@@ -32,14 +44,12 @@ Swagger UI is served at `/swagger/index.html` once it's running.
 - `internal/job` — HTTP handlers, the job service (owns the in-memory bookkeeping for jobs currently running — cancel funcs, progress trackers), and the Postgres repositories.
 - `internal/pipeline` — the actual pipeline engine: ingest/validate/transform/aggregate/export, each stage a pool of goroutines connected by channels.
 - `internal/middleware` — API key auth, CORS, rate limiting, security headers, request logging (with correlation IDs).
-- `internal/models` — the DB row shapes. Kept as a separate package from `internal/pipeline`'s own types specifically to avoid an import cycle (both `job` and `pipeline` depend on it).
+- `internal/models` — the DB row shapes.
 - `internal/config`, `internal/db` — env-based config loading, connection pool setup.
 - `migrations/` — plain SQL, run through `golang-migrate`.
 - `docs/` — generated swagger output, don't hand-edit it.
 
-## A few things worth knowing
+## Architecture Highlights
 
-- Job IDs are UUIDs (`gen_random_uuid()`, native since Postgres 13, no extension required).
-- Ingesters/transformers/exporters are a small plugin registry (`internal/pipeline/interface.go`), each registered via `init()` in its own file. Right now that's csv/json ingest, upper/lowercase transforms, and S3 export — adding a new one is just implementing the relevant interface and calling `Register*` on it.
-- File-path sources are sandboxed to `SandboxDir` (`internal/pipeline/ingest.go`) to block path traversal — only `data:` URIs, `http(s)://` URLs, and paths under that directory are allowed.
-- `golangci-lint run ./...` currently reports a handful of pre-existing `errcheck`/`bodyclose` findings (unchecked `rows.Close()`, `json.Encode()`, etc.) that haven't been cleaned up yet.
+- **Plugin System:** Ingesters, transformers, and exporters are built on an interface registry (`internal/pipeline/interface.go`), making it incredibly easy to add new data sources or transformation rules.
+- **Security:** Built-in Path Traversal protection ensures local file reads cannot escape the designated sandbox directory.

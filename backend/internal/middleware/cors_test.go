@@ -31,9 +31,6 @@ func TestCorsMiddleware(t *testing.T) {
 		handler.ServeHTTP(rec, req)
 
 		allowed := rec.Header().Get("Access-Control-Allow-Methods")
-		// CancelJob is registered as PATCH - a preflight rejecting PATCH
-		// here silently blocks the browser from ever sending the real
-		// request, surfacing as a generic "Network Error" client-side.
 		for _, method := range []string{"GET", "POST", "PATCH", "DELETE"} {
 			if !strings.Contains(allowed, method) {
 				t.Errorf("Access-Control-Allow-Methods = %q, missing %q", allowed, method)

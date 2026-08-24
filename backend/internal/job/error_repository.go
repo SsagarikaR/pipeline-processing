@@ -26,9 +26,9 @@ func (s *postgresErrorStore) InsertError(ctx context.Context, e models.JobError)
 }
 
 // GetErrorsByJob returns all the errors recorded for a job, oldest first.
-func (s *postgresErrorStore) GetErrorsByJob(ctx context.Context, jobID uuid.UUID) ([]models.JobError, error) {
+func (s *postgresErrorStore) GetErrorsByJob(ctx context.Context, jobID uuid.UUID, limit, offset int) ([]models.JobError, error) {
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, job_id, record_data, error_message, stage, created_at FROM job_errors WHERE job_id = $1 ORDER BY created_at`, jobID)
+		`SELECT id, job_id, record_data, error_message, stage, created_at FROM job_errors WHERE job_id = $1 ORDER BY created_at LIMIT $2 OFFSET $3`, jobID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("store: get errors: %w", err)
 	}

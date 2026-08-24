@@ -25,7 +25,9 @@ describe('jobService (Unit Test)', () => {
 
     const jobs = await jobService.getAllJobs();
 
-    expect(axiosInstance.get).toHaveBeenCalledWith('/pipelines');
+    expect(axiosInstance.get).toHaveBeenCalledWith('/pipelines', {
+      params: { limit: 50, offset: 0 },
+    });
     expect(jobs).toEqual(mockJobs);
   });
 
