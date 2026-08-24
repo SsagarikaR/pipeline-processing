@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
@@ -60,13 +62,16 @@ type JobSpec struct {
 // pipeline stages, then persisted via JobErrorRepository.Insert once the
 // error collector picks it up.
 type ProcessError struct {
-	JobID     int
+	JobID     uuid.UUID
 	Stage     string
 	Record    *Record
 	Message   string
 	CreatedAt time.Time
 }
 
+// ToJobError converts an in-flight ProcessError into the models.JobError
+// shape that gets saved to the database, serializing the offending
+// record's data to JSON if one was attached.
 func (e ProcessError) ToJobError() models.JobError {
 	data := ""
 	if e.Record != nil {
@@ -81,6 +86,8 @@ func (e ProcessError) ToJobError() models.JobError {
 	}
 }
 
+// toJSONString marshals a record's data to a JSON string for storage,
+// falling back to a readable error message if it can't be marshaled.
 func toJSONString(data map[string]any) string {
 	b, err := json.Marshal(data)
 	if err != nil {

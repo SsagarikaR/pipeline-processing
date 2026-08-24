@@ -1,20 +1,31 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, WifiOff } from 'lucide-react';
 import { jobService as api } from '../service/jobService';
 import type { Job } from '../types/job';
-import StatusBadge from '../components/StatusBadge';
-import AppButton from '../components/AppButton';
-import ConfirmModal from '../components/ConfirmModal';
+import StatusBadge from '../components/common/StatusBadge';
+import AppButton from '../components/common/AppButton';
+import ConfirmModal from '../components/common/ConfirmModal';
+import { ROUTES, COMMON_LABELS } from '../constants/common';
+import { JOB_LIST_TEXTS } from '../constants/jobList';
+import { jobTitle } from '../utils/jobTitle';
+const CreateJobModal = lazy(() => import('../components/jobList/CreateJobModal'));
 
+/**
+ * The home page: lists every pipeline job, auto-refreshing every 15
+ * minutes (or on demand), with entry points to create a new job and to
+ * delete an existing one.
+ */
 export default function JobList() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
-  const [deleteJobId, setDeleteJobId] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Job | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
+  /** Fetches the job list from the API and updates loading/error state around it. */
   async function loadJobs() {
     setLoading(true);
     try {
@@ -23,7 +34,7 @@ export default function JobList() {
       setLastFetched(new Date());
       setError(null);
     } catch {
-      setError('Failed to load jobs — is the backend running on :8081?');
+      setError(JOB_LIST_TEXTS.FETCH_ERROR);
     } finally {
       setLoading(false);
     }
@@ -35,31 +46,43 @@ export default function JobList() {
     return () => clearInterval(interval);
   }, []);
 
-  function promptDelete(id: number, e: React.MouseEvent) {
+  /**
+   * Opens the delete-confirmation modal for a job. Stops the click from
+   * also triggering the card's own Link navigation to the job detail page.
+   */
+  function promptDelete(job: Job, e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    setDeleteJobId(id);
+    setDeleteTarget(job);
   }
 
+  /**
+   * Deletes the job the confirmation modal is open for, then refreshes
+   * the list. The modal always closes, success or failure - the axios
+   * interceptor already toasts the error, so leaving it stuck open on
+   * failure would just be redundant.
+   */
   async function handleDelete() {
-    if (deleteJobId) {
-      await api.deleteJob(deleteJobId);
-      setDeleteJobId(null);
-      loadJobs();
+    if (deleteTarget) {
+      try {
+        await api.deleteJob(deleteTarget.id);
+        loadJobs();
+      } finally {
+        setDeleteTarget(null);
+      }
     }
   }
 
-  if (loading) return <div className="p-8 text-neutral-500">Loading jobs…</div>;
-  if (error) return <div className="p-8 text-danger-600">{error}</div>;
+  if (loading) return <div className="p-8 text-neutral-500">{JOB_LIST_TEXTS.LOADING_JOBS}</div>;
 
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-neutral-900">Pipeline Jobs</h1>
+          <h1 className="text-2xl font-semibold text-neutral-900">{JOB_LIST_TEXTS.TITLE}</h1>
           {lastFetched && (
             <div className="text-xs text-neutral-500 mt-1">
-              Last fetched: {lastFetched.toLocaleTimeString()}
+              {JOB_LIST_TEXTS.LAST_FETCHED}{lastFetched.toLocaleTimeString()}
             </div>
           )}
         </div>
@@ -69,40 +92,49 @@ export default function JobList() {
             onClick={loadJobs} 
             disabled={loading}
             className="!p-2"
-            title="Refresh Jobs"
+            title={COMMON_LABELS.REFRESH}
           >
             <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
           </AppButton>
-          <Link to="/create" className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors inline-flex items-center justify-center">
-            + New Job
-          </Link>
+          <AppButton onClick={() => setIsCreateOpen(true)}>
+            {JOB_LIST_TEXTS.NEW_JOB}
+          </AppButton>
         </div>
       </div>
 
-      {jobs.length === 0 ? (
+      {error ? (
         <div className="text-center py-16 text-neutral-400 border-2 border-dashed rounded-xl">
-          No jobs yet — create one to get started.
+          <WifiOff size={28} className="mx-auto mb-3 text-neutral-300" />
+          <p className="text-neutral-500 font-medium">{JOB_LIST_TEXTS.NO_JOBS_FOUND}</p>
+          <p className="text-xs text-neutral-400 mt-1">{error}</p>
+          <AppButton variant="secondary" size="sm" onClick={loadJobs} className="mt-4">
+            {COMMON_LABELS.REFRESH}
+          </AppButton>
+        </div>
+      ) : jobs.length === 0 ? (
+        <div className="text-center py-16 text-neutral-400 border-2 border-dashed rounded-xl">
+          {JOB_LIST_TEXTS.NO_JOBS}
         </div>
       ) : (
         <div className="space-y-3">
           {jobs.map((job) => (
             <Link
               key={job.id}
-              to={`/jobs/${job.id}`}
+              to={ROUTES.jobDetail(job.id)}
               className="block bg-white border border-neutral-200 rounded-xl p-4 hover:border-brand-300 hover:shadow-sm transition-all"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-sm text-neutral-500">#{job.id}</span>
+                  <span className="text-sm font-medium text-neutral-800">{jobTitle(job)}</span>
                   <StatusBadge status={job.status} />
                 </div>
-                <button onClick={(e) => promptDelete(job.id, e)} className="text-xs text-neutral-400 hover:text-danger-600 transition-colors">
-                  Delete
+                <button onClick={(e) => promptDelete(job, e)} className="text-xs text-neutral-400 hover:text-danger-600 transition-colors">
+                  {COMMON_LABELS.DELETE}
                 </button>
               </div>
               <div className="mt-2 flex gap-6 text-sm text-neutral-500">
-                <span>{job.processed_records} processed</span>
-                <span>{job.error_count} errors</span>
+                <span>{job.processed_records} {JOB_LIST_TEXTS.PROCESSED}</span>
+                <span>{job.error_count} {JOB_LIST_TEXTS.ERRORS}</span>
                 <span>{new Date(job.created_at).toLocaleString()}</span>
               </div>
             </Link>
@@ -110,13 +142,18 @@ export default function JobList() {
         </div>
       )}
 
-      <ConfirmModal 
-        isOpen={deleteJobId !== null}
-        title="Delete Job"
-        message={`Delete job #${deleteJobId}? This removes its results and errors too.`}
+      <ConfirmModal
+        isOpen={deleteTarget !== null}
+        title={JOB_LIST_TEXTS.DELETE_MODAL_TITLE}
+        message={deleteTarget ? JOB_LIST_TEXTS.deleteModalMessage(jobTitle(deleteTarget)) : ''}
         onConfirm={handleDelete}
-        onCancel={() => setDeleteJobId(null)}
+        onCancel={() => setDeleteTarget(null)}
       />
+      {isCreateOpen && (
+        <Suspense fallback={null}>
+          <CreateJobModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
+        </Suspense>
+      )}
     </div>
   );
 }

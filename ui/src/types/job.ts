@@ -4,8 +4,9 @@
 export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 
 export interface Job {
-  id: number;
+  id: string;
   status: JobStatus;
+  spec: JobSpec;
   total_records: number;
   processed_records: number;
   error_count: number;
@@ -16,16 +17,16 @@ export interface Job {
 }
 
 export interface Result {
-  id: number;
-  job_id: number;
+  id: string;
+  job_id: string;
   group_key: string;
   aggregated_value: number;
   created_at: string;
 }
 
 export interface JobError {
-  id: number;
-  job_id: number;
+  id: string;
+  job_id: string;
   record_data: string;
   error_message: string;
   stage: string;
@@ -33,7 +34,7 @@ export interface JobError {
 }
 
 export interface ProgressResponse {
-  jobId: number;
+  jobId: string;
   status: JobStatus;
   processed: number;
   errorCount: number;
@@ -60,7 +61,7 @@ export interface TransformConfig {
   params: Record<string, string>;
 }
 
-export type AggregationOp = 'sum' | 'avg' | 'count';
+export type AggregationOp = 'sum' | 'avg' | 'count' | 'min' | 'max';
 
 export interface AggregationConfig {
   field: string;
@@ -87,3 +88,4 @@ export interface JobSpec {
   exports: ExportConfig[];
   concurrency: ConcurrencyConfig;
 }
+

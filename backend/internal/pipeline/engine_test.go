@@ -11,8 +11,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
+
+func init() {
+	SandboxDir = ""
+}
 
 func TestEngineRun_Success(t *testing.T) {
 	// Create a temporary JSON file to ingest
@@ -44,7 +50,6 @@ func TestEngineRun_Success(t *testing.T) {
 
 	tracker := NewTracker(func(e ProcessError) {})
 	resultStore := func(ctx context.Context, results []models.Result) error {
-		// Mock store
 		if len(results) != 2 {
 			return fmt.Errorf("expected 2 results, got %d", len(results))
 		}
@@ -54,7 +59,7 @@ func TestEngineRun_Success(t *testing.T) {
 		return nil
 	}
 
-	status := Run(context.Background(), 1, spec, tracker, resultStore, urlStore)
+	status := Run(context.Background(), uuid.New(), spec, tracker, resultStore, urlStore)
 
 	if status != StatusCompleted {
 		t.Errorf("expected status %s, got %s", StatusCompleted, status)
@@ -74,7 +79,6 @@ func TestEngineRun_MalformedSource(t *testing.T) {
 	tmpDir := t.TempDir()
 	sourcePath := filepath.Join(tmpDir, "input.csv")
 
-	// Missing quotes or malformed CSV to trigger immediate fail
 	data := `name,age
 "Alice, 25`
 	if err := os.WriteFile(sourcePath, []byte(data), 0644); err != nil {
@@ -96,7 +100,7 @@ func TestEngineRun_MalformedSource(t *testing.T) {
 		return nil
 	}
 
-	status := Run(context.Background(), 2, spec, tracker, resultStore, urlStore)
+	status := Run(context.Background(), uuid.New(), spec, tracker, resultStore, urlStore)
 
 	if status != StatusFailed {
 		t.Errorf("expected status %s, got %s", StatusFailed, status)
@@ -114,14 +118,13 @@ func TestEngineRun_API_JSON(t *testing.T) {
 	// Mock HTTP Server
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		// Mock the randomuser.me object response structure
 		resp := map[string]any{
 			"results": []map[string]any{
 				{"gender": "female", "nat": "US"},
 				{"gender": "male", "nat": "GB"},
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer srv.Close()
 
@@ -140,7 +143,7 @@ func TestEngineRun_API_JSON(t *testing.T) {
 		return nil
 	}
 
-	status := Run(context.Background(), 3, spec, tracker, resultStore, urlStore)
+	status := Run(context.Background(), uuid.New(), spec, tracker, resultStore, urlStore)
 
 	if status != StatusCompleted {
 		t.Errorf("expected status %s, got %s", StatusCompleted, status)

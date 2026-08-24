@@ -11,6 +11,8 @@ import (
 	"github.com/SsagarikaR/pipeline-processing/internal/config"
 )
 
+// New opens a Postgres connection pool, sets sane pool limits, and pings
+// the database to make sure it's actually reachable before returning.
 func New(ctx context.Context, cfg config.DBConfig) (*sql.DB, error) {
 	pool, err := sql.Open("postgres", cfg.DSN())
 	if err != nil {

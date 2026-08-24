@@ -11,37 +11,58 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/google/uuid"
 
 	"github.com/SsagarikaR/pipeline-processing/internal/config"
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
-func runExport(ctx context.Context, jobID int, in <-chan aggOutput, exports []ExportConfig, resultStore func(ctx context.Context, results []models.Result) error, storeURL func(ctx context.Context, url string) error, errCh chan<- ProcessError) <-chan struct{} {
+// runExport is the pipeline's final stage. It waits for the aggregation
+// stage's single output, saves the results to the database, then runs
+// every configured exporter (e.g. writing to S3) and records the
+// resulting URL. The returned channel closes once all of that is done,
+// signalling the whole pipeline run is finished.
+func runExport(ctx context.Context, jobID uuid.UUID, in <-chan aggOutput, exports []ExportConfig, resultStore func(ctx context.Context, results []models.Result) error, storeURL func(ctx context.Context, url string) error, errCh chan<- ProcessError) <-chan struct{} {
 	doneCh := make(chan struct{})
 
 	go func() {
 		defer close(doneCh)
-		out, ok := <-in
-		if !ok {
+		var out aggOutput
+		var ok bool
+		select {
+		case <-ctx.Done():
 			return
+		case out, ok = <-in:
+			if !ok {
+				return
+			}
 		}
 
 		if err := resultStore(ctx, out.Results); err != nil {
 			slog.Error("export stage failed to store results", "job_id", jobID, "error", err)
-			errCh <- ProcessError{JobID: jobID, Stage: "export", Message: err.Error()}
+			select {
+			case errCh <- ProcessError{JobID: jobID, Stage: "export", Message: err.Error()}:
+			case <-ctx.Done():
+			}
 		}
 
 		for _, cfg := range exports {
 			exporter, ok := GetExporter(cfg.Type)
 			if !ok {
 				slog.Error("export stage failed: unknown export type", "job_id", jobID, "type", cfg.Type)
-				errCh <- ProcessError{JobID: jobID, Stage: "export", Message: "unknown export type: " + cfg.Type}
-				continue 
+				select {
+				case errCh <- ProcessError{JobID: jobID, Stage: "export", Message: "unknown export type: " + cfg.Type}:
+				case <-ctx.Done():
+				}
+				continue
 			}
 			url, err := exporter.Export(ctx, cfg, out.Records, out.Results)
 			if err != nil {
 				slog.Error("export stage failed", "job_id", jobID, "type", cfg.Type, "error", err)
-				errCh <- ProcessError{JobID: jobID, Stage: "export", Message: err.Error()}
+				select {
+				case errCh <- ProcessError{JobID: jobID, Stage: "export", Message: err.Error()}:
+				case <-ctx.Done():
+				}
 			}
 			if url != "" && storeURL != nil {
 				if err := storeURL(ctx, url); err != nil {
@@ -54,10 +75,11 @@ func runExport(ctx context.Context, jobID int, in <-chan aggOutput, exports []Ex
 	return doneCh
 }
 
-
-
 type s3Exporter struct{}
 
+// Export uploads a job's records and results as one JSON object to S3
+// (or an S3-compatible endpoint, for local dev via localstack) and
+// returns the object's URL.
 func (s3Exporter) Export(ctx context.Context, cfg ExportConfig, records []Record, results []models.Result) (string, error) {
 	appConfig := config.LoadConfig()
 	bucket := appConfig.S3.Bucket
@@ -99,6 +121,8 @@ func (s3Exporter) Export(ctx context.Context, cfg ExportConfig, records []Record
 	return url, nil
 }
 
+// init registers the built-in s3 exporter so it's available as soon as
+// the package is imported.
 func init() {
 	RegisterExporter("s3", s3Exporter{})
 }

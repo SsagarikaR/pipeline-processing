@@ -4,10 +4,18 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/google/uuid"
+
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 )
 
-func Run(ctx context.Context, jobID int, spec JobSpec, tracker *Tracker, resultStore func(ctx context.Context, results []models.Result) error, storeURL func(ctx context.Context, url string) error) string {
+// Run drives one job through the full pipeline: ingest -> validate ->
+// transform -> aggregate -> export. Each stage is its own set of
+// goroutines connected by channels, so records stream through rather
+// than waiting for earlier stages to fully finish. It blocks until the
+// export stage is done (or the context is cancelled) and returns the
+// job's final status.
+func Run(ctx context.Context, jobID uuid.UUID, spec JobSpec, tracker *Tracker, resultStore func(ctx context.Context, results []models.Result) error, storeURL func(ctx context.Context, url string) error) string {
 	slog.Info("pipeline started", "job_id", jobID)
 	tracker.Run()
 	defer tracker.Close()

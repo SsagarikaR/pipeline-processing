@@ -5,9 +5,16 @@ import (
 	"log/slog"
 	"strings"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
-func runTransform(ctx context.Context, jobID int, in <-chan Record, transforms []TransformConfig, workers int, errCh chan<- ProcessError) <-chan Record {
+// runTransform is the pipeline's transform stage. A pool of worker
+// goroutines pulls records off in, runs each configured transform on
+// them in order, and forwards the result. A record that hits an
+// unknown transform or a transform error is dropped (reported via
+// errCh) instead of passed downstream.
+func runTransform(ctx context.Context, jobID uuid.UUID, in <-chan Record, transforms []TransformConfig, workers int, errCh chan<- ProcessError) <-chan Record {
 	if workers < 1 {
 		workers = 1
 	}
@@ -73,6 +80,8 @@ func runTransform(ctx context.Context, jobID int, in <-chan Record, transforms [
 	return transformedCh
 }
 
+// init registers the built-in transforms (lowercase, uppercase) so
+// they're available as soon as the package is imported.
 func init() {
 	RegisterTransformer("lowercase", func(r Record, params map[string]any) (Record, error) {
 		if field, ok := params["field"].(string); ok {

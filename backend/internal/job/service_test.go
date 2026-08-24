@@ -6,21 +6,23 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/google/uuid"
+
 	"github.com/SsagarikaR/pipeline-processing/internal/models"
 	"github.com/SsagarikaR/pipeline-processing/internal/pipeline"
 )
 
 type mockJobStore struct {
-	Jobs map[int]models.Job
+	Jobs map[uuid.UUID]models.Job
 }
 
 func (m *mockJobStore) CreateJob(ctx context.Context, spec json.RawMessage) (models.Job, error) {
-	j := models.Job{ID: len(m.Jobs) + 1, Status: pipeline.StatusPending}
+	j := models.Job{ID: uuid.New(), Status: pipeline.StatusPending}
 	m.Jobs[j.ID] = j
 	return j, nil
 }
 
-func (m *mockJobStore) UpdateStatus(ctx context.Context, id int, status string) error {
+func (m *mockJobStore) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
 	j, ok := m.Jobs[id]
 	if !ok {
 		return sql.ErrNoRows
@@ -30,7 +32,7 @@ func (m *mockJobStore) UpdateStatus(ctx context.Context, id int, status string) 
 	return nil
 }
 
-func (m *mockJobStore) UpdateStatusAndMetrics(ctx context.Context, jobID int, status string, processed int64, errors int64) error {
+func (m *mockJobStore) UpdateStatusAndMetrics(ctx context.Context, jobID uuid.UUID, status string, processed int64, errors int64) error {
 	j, ok := m.Jobs[jobID]
 	if !ok {
 		return sql.ErrNoRows
@@ -42,7 +44,7 @@ func (m *mockJobStore) UpdateStatusAndMetrics(ctx context.Context, jobID int, st
 	return nil
 }
 
-func (m *mockJobStore) UpdateExportURL(ctx context.Context, jobID int, url string) error {
+func (m *mockJobStore) UpdateExportURL(ctx context.Context, jobID uuid.UUID, url string) error {
 	j, ok := m.Jobs[jobID]
 	if !ok {
 		return sql.ErrNoRows
@@ -53,7 +55,7 @@ func (m *mockJobStore) UpdateExportURL(ctx context.Context, jobID int, url strin
 	return nil
 }
 
-func (m *mockJobStore) GetJob(ctx context.Context, id int) (models.Job, error) {
+func (m *mockJobStore) GetJob(ctx context.Context, id uuid.UUID) (models.Job, error) {
 	j, ok := m.Jobs[id]
 	if !ok {
 		return models.Job{}, sql.ErrNoRows
@@ -69,7 +71,7 @@ func (m *mockJobStore) GetAllJobs(ctx context.Context) ([]models.Job, error) {
 	return list, nil
 }
 
-func (m *mockJobStore) DeleteJobs(ctx context.Context, id int) error {
+func (m *mockJobStore) DeleteJobs(ctx context.Context, id uuid.UUID) error {
 	if _, ok := m.Jobs[id]; !ok {
 		return sql.ErrNoRows
 	}
@@ -77,8 +79,20 @@ func (m *mockJobStore) DeleteJobs(ctx context.Context, id int) error {
 	return nil
 }
 
+func (m *mockJobStore) RecoverStuckJobs(ctx context.Context) (int64, error) {
+	var n int64
+	for id, j := range m.Jobs {
+		if j.Status == pipeline.StatusPending || j.Status == pipeline.StatusRunning {
+			j.Status = pipeline.StatusFailed
+			m.Jobs[id] = j
+			n++
+		}
+	}
+	return n, nil
+}
+
 type mockResultStore struct {
-	Results map[int][]models.Result
+	Results map[uuid.UUID][]models.Result
 }
 
 func (m *mockResultStore) InsertResults(ctx context.Context, results []models.Result) error {
@@ -88,12 +102,12 @@ func (m *mockResultStore) InsertResults(ctx context.Context, results []models.Re
 	return nil
 }
 
-func (m *mockResultStore) GetResultsByJob(ctx context.Context, id int) ([]models.Result, error) {
+func (m *mockResultStore) GetResultsByJob(ctx context.Context, id uuid.UUID) ([]models.Result, error) {
 	return m.Results[id], nil
 }
 
 type mockErrorStore struct {
-	Errors map[int][]models.JobError
+	Errors map[uuid.UUID][]models.JobError
 }
 
 func (m *mockErrorStore) InsertError(ctx context.Context, err models.JobError) error {
@@ -101,14 +115,14 @@ func (m *mockErrorStore) InsertError(ctx context.Context, err models.JobError) e
 	return nil
 }
 
-func (m *mockErrorStore) GetErrorsByJob(ctx context.Context, id int) ([]models.JobError, error) {
+func (m *mockErrorStore) GetErrorsByJob(ctx context.Context, id uuid.UUID) ([]models.JobError, error) {
 	return m.Errors[id], nil
 }
 
 func TestJobService_CreateJob(t *testing.T) {
-	js := &mockJobStore{Jobs: make(map[int]models.Job)}
-	rs := &mockResultStore{Results: make(map[int][]models.Result)}
-	es := &mockErrorStore{Errors: make(map[int][]models.JobError)}
+	js := &mockJobStore{Jobs: make(map[uuid.UUID]models.Job)}
+	rs := &mockResultStore{Results: make(map[uuid.UUID][]models.Result)}
+	es := &mockErrorStore{Errors: make(map[uuid.UUID][]models.JobError)}
 	svc := NewJobService(js, rs, es)
 
 	spec := pipeline.JobSpec{
@@ -119,8 +133,8 @@ func TestJobService_CreateJob(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if job.ID != 1 {
-		t.Errorf("expected job ID 1, got %d", job.ID)
+	if job.ID == uuid.Nil {
+		t.Error("expected a generated job ID, got the zero UUID")
 	}
 
 	// Wait briefly so background goroutine starts
@@ -128,77 +142,99 @@ func TestJobService_CreateJob(t *testing.T) {
 }
 
 func TestJobService_GetJob(t *testing.T) {
-	js := &mockJobStore{Jobs: map[int]models.Job{
-		1: {ID: 1, Status: pipeline.StatusRunning},
+	id := uuid.New()
+	js := &mockJobStore{Jobs: map[uuid.UUID]models.Job{
+		id: {ID: id, Status: pipeline.StatusRunning},
 	}}
 	svc := NewJobService(js, nil, nil)
 
-	j, err := svc.GetJob(context.Background(), 1)
+	j, err := svc.GetJob(context.Background(), id)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if j.ID != 1 {
-		t.Errorf("expected job ID 1, got %d", j.ID)
+	if j.ID != id {
+		t.Errorf("expected job ID %s, got %s", id, j.ID)
 	}
 }
 
 func TestJobService_CancelJob(t *testing.T) {
-	js := &mockJobStore{Jobs: make(map[int]models.Job)}
+	js := &mockJobStore{Jobs: make(map[uuid.UUID]models.Job)}
 	svc := NewJobService(js, nil, nil)
 
-	// Attempting to cancel non-existent/not-running job
-	err := svc.CancelJob(context.Background(), 99)
+	// Attempting to cancel a job that doesn't exist at all.
+	err := svc.CancelJob(context.Background(), uuid.New())
 	if err == nil {
 		t.Error("expected error when cancelling non-running job")
 	}
 
-	js.Jobs[1] = models.Job{ID: 1, Status: pipeline.StatusRunning}
+	id := uuid.New()
+	js.Jobs[id] = models.Job{ID: id, Status: pipeline.StatusRunning}
 	_, cancel := context.WithCancel(context.Background())
 	svc.mu.Lock()
-	svc.cancelFuncs[1] = cancel
+	svc.cancelFuncs[id] = cancel
 	svc.mu.Unlock()
 
-	err = svc.CancelJob(context.Background(), 1)
+	err = svc.CancelJob(context.Background(), id)
 	if err != nil {
 		t.Fatalf("unexpected error cancelling job: %v", err)
 	}
 
-	if js.Jobs[1].Status != pipeline.StatusCancelled {
-		t.Errorf("expected status cancelled, got %s", js.Jobs[1].Status)
+	if js.Jobs[id].Status != pipeline.StatusCancelled {
+		t.Errorf("expected status cancelled, got %s", js.Jobs[id].Status)
+	}
+}
+
+func TestJobService_CancelJob_AlreadyCompleted(t *testing.T) {
+	id := uuid.New()
+	js := &mockJobStore{Jobs: map[uuid.UUID]models.Job{
+		id: {ID: id, Status: pipeline.StatusCompleted},
+	}}
+	svc := NewJobService(js, nil, nil)
+
+	// No cancelFuncs entry for this job (it already finished), so the
+	// error should name its actual status instead of a generic message.
+	err := svc.CancelJob(context.Background(), id)
+	if err == nil {
+		t.Fatal("expected error when cancelling a completed job")
+	}
+	if want := "job is not running (current status: completed)"; err.Error() != want {
+		t.Errorf("error = %q, want %q", err.Error(), want)
 	}
 }
 
 func TestJobService_DeleteJob(t *testing.T) {
-	js := &mockJobStore{Jobs: map[int]models.Job{
-		1: {ID: 1, Status: pipeline.StatusRunning},
+	id := uuid.New()
+	js := &mockJobStore{Jobs: map[uuid.UUID]models.Job{
+		id: {ID: id, Status: pipeline.StatusRunning},
 	}}
 	svc := NewJobService(js, nil, nil)
 
 	_, cancel := context.WithCancel(context.Background())
 	svc.mu.Lock()
-	svc.cancelFuncs[1] = cancel
+	svc.cancelFuncs[id] = cancel
 	svc.mu.Unlock()
 
-	err := svc.DeleteJob(context.Background(), 1)
+	err := svc.DeleteJob(context.Background(), id)
 	if err != nil {
 		t.Fatalf("unexpected error deleting job: %v", err)
 	}
 
-	if _, ok := js.Jobs[1]; ok {
+	if _, ok := js.Jobs[id]; ok {
 		t.Errorf("expected job to be deleted from store")
 	}
 
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
-	if _, ok := svc.cancelFuncs[1]; ok {
+	if _, ok := svc.cancelFuncs[id]; ok {
 		t.Errorf("expected cancel func to be removed")
 	}
 }
 
 func TestJobService_GetAllJobs(t *testing.T) {
-	js := &mockJobStore{Jobs: map[int]models.Job{
-		1: {ID: 1},
-		2: {ID: 2},
+	id1, id2 := uuid.New(), uuid.New()
+	js := &mockJobStore{Jobs: map[uuid.UUID]models.Job{
+		id1: {ID: id1},
+		id2: {ID: id2},
 	}}
 	svc := NewJobService(js, nil, nil)
 	jobs, err := svc.GetAllJobs(context.Background())
@@ -211,11 +247,12 @@ func TestJobService_GetAllJobs(t *testing.T) {
 }
 
 func TestJobService_GetResults(t *testing.T) {
-	rs := &mockResultStore{Results: map[int][]models.Result{
-		1: {{JobID: 1, GroupKey: "total", AggregatedValue: 100}},
+	id := uuid.New()
+	rs := &mockResultStore{Results: map[uuid.UUID][]models.Result{
+		id: {{JobID: id, GroupKey: "total", AggregatedValue: 100}},
 	}}
 	svc := NewJobService(nil, rs, nil)
-	res, err := svc.GetResults(context.Background(), 1)
+	res, err := svc.GetResults(context.Background(), id)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -225,15 +262,40 @@ func TestJobService_GetResults(t *testing.T) {
 }
 
 func TestJobService_GetErrors(t *testing.T) {
-	es := &mockErrorStore{Errors: map[int][]models.JobError{
-		1: {{JobID: 1, ErrorMessage: "test error"}},
+	id := uuid.New()
+	es := &mockErrorStore{Errors: map[uuid.UUID][]models.JobError{
+		id: {{JobID: id, ErrorMessage: "test error"}},
 	}}
 	svc := NewJobService(nil, nil, es)
-	errs, err := svc.GetErrors(context.Background(), 1)
+	errs, err := svc.GetErrors(context.Background(), id)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if len(errs) != 1 {
 		t.Errorf("expected 1 error, got %d", len(errs))
+	}
+}
+
+func TestJobService_RecoverStuckJobs(t *testing.T) {
+	id1, id2, id3 := uuid.New(), uuid.New(), uuid.New()
+	js := &mockJobStore{Jobs: map[uuid.UUID]models.Job{
+		id1: {ID: id1, Status: pipeline.StatusPending},
+		id2: {ID: id2, Status: pipeline.StatusRunning},
+		id3: {ID: id3, Status: pipeline.StatusCompleted},
+	}}
+	svc := NewJobService(js, nil, nil)
+
+	if err := svc.RecoverStuckJobs(context.Background()); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if js.Jobs[id1].Status != pipeline.StatusFailed {
+		t.Errorf("expected pending job to be marked failed, got %s", js.Jobs[id1].Status)
+	}
+	if js.Jobs[id2].Status != pipeline.StatusFailed {
+		t.Errorf("expected running job to be marked failed, got %s", js.Jobs[id2].Status)
+	}
+	if js.Jobs[id3].Status != pipeline.StatusCompleted {
+		t.Errorf("expected completed job to be left alone, got %s", js.Jobs[id3].Status)
 	}
 }

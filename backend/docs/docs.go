@@ -88,8 +88,8 @@ const docTemplate = `{
                 "summary": "Cancel a pipeline job",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Job ID",
+                        "type": "string",
+                        "description": "Job ID (UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -123,8 +123,8 @@ const docTemplate = `{
                 "summary": "Get pipeline errors",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Job ID",
+                        "type": "string",
+                        "description": "Job ID (UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -164,8 +164,8 @@ const docTemplate = `{
                 "summary": "Get pipeline progress",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Job ID",
+                        "type": "string",
+                        "description": "Job ID (UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -206,8 +206,8 @@ const docTemplate = `{
                 "summary": "Get pipeline results",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Job ID",
+                        "type": "string",
+                        "description": "Job ID (UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -244,8 +244,8 @@ const docTemplate = `{
                 "summary": "Delete a pipeline job",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Job ID",
+                        "type": "string",
+                        "description": "Job ID (UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -285,8 +285,8 @@ const docTemplate = `{
                 "summary": "Get a pipeline job",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Job ID",
+                        "type": "string",
+                        "description": "Job ID (UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -338,7 +338,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "processed_records": {
                     "type": "integer"
@@ -370,10 +370,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "job_id": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "record_data": {
                     "type": "string"
@@ -396,10 +396,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "job_id": {
-                    "type": "integer"
+                    "type": "string"
                 }
             }
         },

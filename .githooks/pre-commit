@@ -1,0 +1,32 @@
+#!/bin/bash
+# Pre-commit hook to run linters and tests for both FE and BE
+
+set -e
+echo "Running pre-commit checks..."
+
+# 1. Run Backend Tests
+echo "==========================================="
+echo "Running Backend Tests (Go)..."
+echo "==========================================="
+cd backend
+go test ./...
+cd ..
+
+# 2. Run Frontend Linting
+echo "==========================================="
+echo "Running Frontend Linting (ESLint)..."
+echo "==========================================="
+cd ui
+npm run lint
+
+# 3. Run Frontend Tests
+echo "==========================================="
+echo "Running Frontend Tests (Vitest)..."
+echo "==========================================="
+# Using run flag to execute vitest in CI (non-watch) mode
+npx vitest run
+cd ..
+
+echo "==========================================="
+echo "All pre-commit checks passed successfully!"
+echo "==========================================="

@@ -17,6 +17,8 @@ type Tracker struct {
 	stageLatencies map[string]time.Duration
 }
 
+// NewTracker creates a Tracker that reports every stage error it sees to
+// onError (used to persist errors to the database as they happen).
 func NewTracker(onError func(ProcessError)) *Tracker {
 	return &Tracker{
 		errCh:      make(chan ProcessError, 100),
@@ -25,6 +27,8 @@ func NewTracker(onError func(ProcessError)) *Tracker {
 	}
 }
 
+// RecordStageLatency saves how long a pipeline stage took, so it can be
+// reported back through the progress endpoint.
 func (t *Tracker) RecordStageLatency(stage string, d time.Duration) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -34,6 +38,8 @@ func (t *Tracker) RecordStageLatency(stage string, d time.Duration) {
 	t.stageLatencies[stage] = d
 }
 
+// StageLatencies returns a copy of the recorded per-stage timings, safe
+// to read while the pipeline is still running.
 func (t *Tracker) StageLatencies() map[string]time.Duration {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -44,6 +50,10 @@ func (t *Tracker) StageLatencies() map[string]time.Duration {
 	return out
 }
 
+// Run starts two background goroutines: one that counts every record
+// that finishes processing, and one that counts errors, logs them, and
+// forwards each to onError for persistence. Call Close once the
+// pipeline is done to stop them.
 func (t *Tracker) Run() {
 	go func() {
 		for range t.progressCh {
@@ -59,6 +69,13 @@ func (t *Tracker) Run() {
 	}()
 }
 
+// Processed returns how many records have finished processing so far.
 func (t *Tracker) Processed() int64 { return atomic.LoadInt64(&t.processed) }
-func (t *Tracker) Errors() int64    { return atomic.LoadInt64(&t.errors) + int64(len(t.errCh)) }
-func (t *Tracker) Close()           { close(t.progressCh); close(t.errCh) }
+
+// Errors returns how many errors have occurred so far, including any
+// still sitting in the error channel waiting to be counted.
+func (t *Tracker) Errors() int64 { return atomic.LoadInt64(&t.errors) + int64(len(t.errCh)) }
+
+// Close shuts down the tracker's channels, which stops the goroutines
+// started by Run.
+func (t *Tracker) Close() { close(t.progressCh); close(t.errCh) }

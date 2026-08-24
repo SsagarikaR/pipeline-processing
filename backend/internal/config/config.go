@@ -5,30 +5,8 @@ import (
 	"os"
 )
 
-type Config struct {
-	Port       string
-	LogLevel   string
-	LogFormat  string
-	CorsOrigin string
-	DB         DBConfig
-	S3         S3Config
-}
-
-type S3Config struct {
-	Bucket   string
-	Endpoint string
-	Region   string
-}
-
-type DBConfig struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	Name     string
-	SSLMode  string
-}
-
+// LoadConfig reads the app's configuration from environment variables,
+// falling back to sensible local-dev defaults for anything that isn't set.
 func LoadConfig() *Config {
 	return &Config{
 		Port:       GetEnv("PORT", "8080"),
@@ -51,6 +29,8 @@ func LoadConfig() *Config {
 	}
 }
 
+// DSN builds the Postgres connection string from the individual DB
+// settings, in the "key=value" format the postgres driver expects.
 func (c DBConfig) DSN() string {
 	return fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
@@ -58,6 +38,8 @@ func (c DBConfig) DSN() string {
 	)
 }
 
+// GetEnv reads an environment variable, returning fallback if it's unset
+// or empty.
 func GetEnv(key, fallback string) string {
 	if value := os.Getenv(key); value != "" {
 		return value

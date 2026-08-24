@@ -12,10 +12,13 @@ import (
 
 	"github.com/SsagarikaR/pipeline-processing/internal/config"
 	"github.com/SsagarikaR/pipeline-processing/internal/db"
-	"github.com/SsagarikaR/pipeline-processing/pkg/logger"
 	"github.com/SsagarikaR/pipeline-processing/internal/server"
+	"github.com/SsagarikaR/pipeline-processing/pkg/logger"
 )
 
+// main is the process entrypoint. It just delegates to run and turns any
+// startup error into a logged message plus a non-zero exit code.
+//
 // @title Pipeline Processing API
 // @version 1.0
 // @description This is a data processing pipeline API.
@@ -28,6 +31,9 @@ func main() {
 	}
 }
 
+// run wires up config, logging, the DB pool, and the HTTP server, then
+// blocks until an interrupt/SIGTERM arrives and shuts everything down
+// cleanly.
 func run() error {
 	cfg := config.LoadConfig()
 	slog.SetDefault(logger.New(cfg.LogLevel, cfg.LogFormat))
@@ -45,7 +51,7 @@ func run() error {
 		}
 	}()
 
-	srv := server.New(cfg, pool)
+	srv := server.New(ctx, cfg, pool)
 
 	go func() {
 		slog.Info("server listening", "addr", srv.Addr)
