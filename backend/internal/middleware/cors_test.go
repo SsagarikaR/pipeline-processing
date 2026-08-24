@@ -31,7 +31,7 @@ func TestCorsMiddleware(t *testing.T) {
 		handler.ServeHTTP(rec, req)
 
 		allowed := rec.Header().Get("Access-Control-Allow-Methods")
-			for _, method := range []string{"GET", "POST", "PATCH", "DELETE"} {
+		for _, method := range []string{"GET", "POST", "PATCH", "DELETE"} {
 			if !strings.Contains(allowed, method) {
 				t.Errorf("Access-Control-Allow-Methods = %q, missing %q", allowed, method)
 			}
