@@ -1,0 +1,107 @@
+services:
+  backend:
+    build:
+      context: ./backend 
+      dockerfile: Dockerfile 
+    image: pipeline-processing-backend:local
+    container_name: pipeline-processing-backend
+    ports:
+      - "${PORT:-8080}:8080" 
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PORT: 8080
+      CORS_ORIGIN: http://localhost:${UI_PORT:-5173}
+      API_KEY: ${API_KEY:-secret-pipeline-key}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-pipeline_processing}
+      S3_ENDPOINT: http://localstack:4566
+      S3_BUCKET: pipeline-bucket
+      AWS_REGION: us-east-1
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:${PORT:-8080}/api/v1}
+        VITE_API_KEY: ${API_KEY:-secret-pipeline-key}
+    image: pipeline-processing-ui:local
+    container_name: pipeline-processing-ui
+    ports:
+      - "${UI_PORT:-5173}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: pipeline-processing-db
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-pipeline_processing}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data 
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-pipeline_processing}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+  
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${ADMIN_PASSWORD:-adminpassword}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - db
+
+  localstack:
+    image: localstack/localstack:3.7
+    container_name: pipeline-processing-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - AWS_DEFAULT_REGION=us-east-1
+      - EDGE_PORT=4566
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - ./localstack-init.sh:/etc/localstack/init/ready.d/init.sh
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  localstack_data:
