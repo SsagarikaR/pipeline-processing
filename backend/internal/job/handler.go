@@ -13,6 +13,7 @@ import (
 
 	_ "github.com/SsagarikaR/pipeline-processing/internal/models"
 	"github.com/SsagarikaR/pipeline-processing/internal/pipeline"
+	"github.com/SsagarikaR/pipeline-processing/pkg/response"
 )
 
 // NewPipelineHandler wires a JobService into an HTTP handler for the
@@ -37,24 +38,22 @@ func (h *pipelineHandler) CreateJob(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 
 	if err := json.NewDecoder(r.Body).Decode(&spec); err != nil {
-		http.Error(w, "failed to parse request: body too large or invalid json", http.StatusBadRequest)
+		response.Error(w, http.StatusBadRequest, "failed to parse request: body too large or invalid json")
 		return
 	}
 
 	newJob, err := h.service.CreateJob(r.Context(), spec)
 	if errors.Is(err, ErrInvalidJobType) {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	if err != nil {
 		slog.Error("failed to create job", "err", err)
-		http.Error(w, "failed to create job", http.StatusInternalServerError)
+		response.Error(w, http.StatusInternalServerError, "failed to create job")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(newJob)
+	response.JSON(w, http.StatusCreated, newJob)
 }
 
 // GetJob godoc
@@ -70,23 +69,22 @@ func (h *pipelineHandler) CreateJob(w http.ResponseWriter, r *http.Request) {
 func (h *pipelineHandler) GetJob(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	j, err := h.service.GetJob(r.Context(), id)
 	if errors.Is(err, sql.ErrNoRows) {
-		http.Error(w, "job not found", http.StatusNotFound)
+		response.Error(w, http.StatusNotFound, "job not found")
 		return
 	}
 	if err != nil {
 		slog.Error("failed to get job", "err", err)
-		http.Error(w, "failed to get job", http.StatusInternalServerError)
+		response.Error(w, http.StatusInternalServerError, "failed to get job")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(j)
+	response.JSON(w, http.StatusOK, j)
 }
 
 // GetAllJobs godoc
@@ -101,12 +99,11 @@ func (h *pipelineHandler) GetAllJobs(w http.ResponseWriter, r *http.Request) {
 	jobs, err := h.service.GetAllJobs(r.Context(), limit, offset)
 	if err != nil {
 		slog.Error("failed to get all jobs", "err", err)
-		http.Error(w, "failed to get all jobs", http.StatusInternalServerError)
+		response.Error(w, http.StatusInternalServerError, "failed to get all jobs")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(jobs)
+	response.JSON(w, http.StatusOK, jobs)
 }
 
 // DeleteJobs godoc
@@ -121,18 +118,18 @@ func (h *pipelineHandler) GetAllJobs(w http.ResponseWriter, r *http.Request) {
 func (h *pipelineHandler) DeleteJobs(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	err = h.service.DeleteJob(r.Context(), id)
 	if errors.Is(err, sql.ErrNoRows) {
-		http.Error(w, "job not found", http.StatusNotFound)
+		response.Error(w, http.StatusNotFound, "job not found")
 		return
 	}
 	if err != nil {
 		slog.Error("failed to delete job", "err", err)
-		http.Error(w, "failed to delete job", http.StatusInternalServerError)
+		response.Error(w, http.StatusInternalServerError, "failed to delete job")
 		return
 	}
 
@@ -150,12 +147,12 @@ func (h *pipelineHandler) DeleteJobs(w http.ResponseWriter, r *http.Request) {
 func (h *pipelineHandler) CancelJob(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if err := h.service.CancelJob(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusConflict) // job already finished / not running
+		response.Error(w, http.StatusConflict, err.Error()) // job already finished / not running
 		return
 	}
 
@@ -175,18 +172,18 @@ func (h *pipelineHandler) CancelJob(w http.ResponseWriter, r *http.Request) {
 func (h *pipelineHandler) GetProgress(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	j, processed, errCount, latencies, err := h.service.GetProgress(r.Context(), id)
 	if errors.Is(err, sql.ErrNoRows) {
-		http.Error(w, "job not found", http.StatusNotFound)
+		response.Error(w, http.StatusNotFound, "job not found")
 		return
 	}
 	if err != nil {
 		slog.Error("failed to get progress", "err", err)
-		http.Error(w, "failed to get progress", http.StatusInternalServerError)
+		response.Error(w, http.StatusInternalServerError, "failed to get progress")
 		return
 	}
 
@@ -223,8 +220,7 @@ func (h *pipelineHandler) GetProgress(w http.ResponseWriter, r *http.Request) {
 		ExportUrl       *string           `json:"exportUrl"`
 	}{j.ID, j.Status, processed, errCount, percent, rate, latencies, j.StartedAt, j.CompletedAt, j.ExportURL}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(resp)
+	response.JSON(w, http.StatusOK, resp)
 }
 
 // GetResults handles GET /api/v1/pipelines/:id/results
@@ -239,7 +235,7 @@ func (h *pipelineHandler) GetProgress(w http.ResponseWriter, r *http.Request) {
 func (h *pipelineHandler) GetResults(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -247,12 +243,11 @@ func (h *pipelineHandler) GetResults(w http.ResponseWriter, r *http.Request) {
 	results, err := h.service.GetResults(r.Context(), id, limit, offset)
 	if err != nil {
 		slog.Error("failed to get results", "err", err)
-		http.Error(w, "failed to get results", http.StatusInternalServerError)
+		response.Error(w, http.StatusInternalServerError, "failed to get results")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(results)
+	response.JSON(w, http.StatusOK, results)
 }
 
 // GetErrors handles GET /api/v1/pipelines/:id/errors
@@ -267,7 +262,7 @@ func (h *pipelineHandler) GetResults(w http.ResponseWriter, r *http.Request) {
 func (h *pipelineHandler) GetErrors(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -275,12 +270,11 @@ func (h *pipelineHandler) GetErrors(w http.ResponseWriter, r *http.Request) {
 	errs, err := h.service.GetErrors(r.Context(), id, limit, offset)
 	if err != nil {
 		slog.Error("failed to get errors", "err", err)
-		http.Error(w, "failed to get errors", http.StatusInternalServerError)
+		response.Error(w, http.StatusInternalServerError, "failed to get errors")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(errs)
+	response.JSON(w, http.StatusOK, errs)
 }
 
 // parseID reads the "id" path value from the request and parses it as a
