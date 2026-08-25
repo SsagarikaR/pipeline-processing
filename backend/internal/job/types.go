@@ -15,7 +15,7 @@ import (
 type JobStore interface {
 	CreateJob(ctx context.Context, spec json.RawMessage) (models.Job, error)
 	GetJob(ctx context.Context, jobID uuid.UUID) (models.Job, error)
-	GetAllJobs(ctx context.Context) ([]models.Job, error)
+	GetAllJobs(ctx context.Context, limit, offset int) ([]models.Job, error)
 	DeleteJobs(ctx context.Context, jobID uuid.UUID) error
 	UpdateStatusAndMetrics(ctx context.Context, jobID uuid.UUID, status string, processed int64, errors int64) error
 	UpdateExportURL(ctx context.Context, jobID uuid.UUID, url string) error
@@ -28,7 +28,7 @@ type postgresJobStore struct {
 
 type ResultStore interface {
 	InsertResults(ctx context.Context, r []models.Result) error
-	GetResultsByJob(ctx context.Context, jobID uuid.UUID) ([]models.Result, error)
+	GetResultsByJob(ctx context.Context, jobID uuid.UUID, limit, offset int) ([]models.Result, error)
 }
 
 type postgresResultStore struct {
@@ -37,7 +37,7 @@ type postgresResultStore struct {
 
 type ErrorStore interface {
 	InsertError(ctx context.Context, e models.JobError) error
-	GetErrorsByJob(ctx context.Context, jobID uuid.UUID) ([]models.JobError, error)
+	GetErrorsByJob(ctx context.Context, jobID uuid.UUID, limit, offset int) ([]models.JobError, error)
 }
 
 type postgresErrorStore struct {

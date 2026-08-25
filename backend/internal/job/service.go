@@ -98,9 +98,9 @@ func (s *JobService) GetJob(ctx context.Context, id uuid.UUID) (models.Job, erro
 	return s.store.GetJob(ctx, id)
 }
 
-// GetAllJobs lists every job in the system.
-func (s *JobService) GetAllJobs(ctx context.Context) ([]models.Job, error) {
-	return s.store.GetAllJobs(ctx)
+// GetAllJobs lists jobs with pagination.
+func (s *JobService) GetAllJobs(ctx context.Context, limit, offset int) ([]models.Job, error) {
+	return s.store.GetAllJobs(ctx, limit, offset)
 }
 
 // DeleteJob cancels the job if it's still running, forgets its
@@ -170,13 +170,13 @@ func (s *JobService) GetProgress(ctx context.Context, id uuid.UUID) (models.Job,
 }
 
 // GetResults returns the aggregated results a job produced.
-func (s *JobService) GetResults(ctx context.Context, id uuid.UUID) ([]models.Result, error) {
-	return s.resultStore.GetResultsByJob(ctx, id)
+func (s *JobService) GetResults(ctx context.Context, id uuid.UUID, limit, offset int) ([]models.Result, error) {
+	return s.resultStore.GetResultsByJob(ctx, id, limit, offset)
 }
 
 // GetErrors returns the records that failed processing for a job.
-func (s *JobService) GetErrors(ctx context.Context, id uuid.UUID) ([]models.JobError, error) {
-	return s.errorStore.GetErrorsByJob(ctx, id)
+func (s *JobService) GetErrors(ctx context.Context, id uuid.UUID, limit, offset int) ([]models.JobError, error) {
+	return s.errorStore.GetErrorsByJob(ctx, id, limit, offset)
 }
 
 // RecoverStuckJobs marks any job left in "pending" or "running" as

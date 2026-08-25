@@ -12,9 +12,9 @@ export const jobService = {
   createJob: (spec: JobSpec): Promise<Job> =>
     axiosInstance.post<Job>(API_ROUTES.PIPELINES, spec).then((r) => r.data),
 
-  /** Lists every job. */
-  getAllJobs: (): Promise<Job[]> =>
-    axiosInstance.get<Job[]>(API_ROUTES.PIPELINES).then((r) => r.data),
+  /** Lists every job with pagination. */
+  getAllJobs: (limit = 50, offset = 0): Promise<Job[]> =>
+    axiosInstance.get<Job[]>(API_ROUTES.PIPELINES, { params: { limit, offset } }).then((r) => r.data),
 
   /** Fetches a single job by ID. */
   getJob: (id: string): Promise<Job> =>
@@ -24,13 +24,13 @@ export const jobService = {
   getProgress: (id: string): Promise<ProgressResponse> =>
     axiosInstance.get<ProgressResponse>(API_ROUTES.pipelineProgress(id)).then((r) => r.data),
 
-  /** Fetches a job's aggregated results. */
-  getResults: (id: string): Promise<Result[]> =>
-    axiosInstance.get<Result[]>(API_ROUTES.pipelineResults(id)).then((r) => r.data),
+  /** Fetches a job's aggregated results with pagination. */
+  getResults: (id: string, limit = 50, offset = 0): Promise<Result[]> =>
+    axiosInstance.get<Result[]>(API_ROUTES.pipelineResults(id), { params: { limit, offset } }).then((r) => r.data),
 
-  /** Fetches the records that failed processing for a job. */
-  getErrors: (id: string): Promise<JobError[]> =>
-    axiosInstance.get<JobError[]>(API_ROUTES.pipelineErrors(id)).then((r) => r.data),
+  /** Fetches the records that failed processing for a job with pagination. */
+  getErrors: (id: string, limit = 50, offset = 0): Promise<JobError[]> =>
+    axiosInstance.get<JobError[]>(API_ROUTES.pipelineErrors(id), { params: { limit, offset } }).then((r) => r.data),
 
   /** Cancels a running job. */
   cancelJob: (id: string): Promise<void> =>
